@@ -10,7 +10,18 @@ class DecisionMaker:
 		:return:
 		"""
 
+	@abstractmethod
+	def getNextKline(self):
+		"""
+		Returns the next calculated kline
 
-class JustAnExample(DecisionMaker):
+		:return:
+		"""
+
+
+class Knn(DecisionMaker):
 	def getPosition(self, inputs):
-		print("helo")
+		pass
+	
+	def getNextKline(self):
+		pass
