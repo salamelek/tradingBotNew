@@ -48,10 +48,22 @@ If you want to change the indicators, change that module only. Want to change th
 JUST THAT. This means that it should also be able to switch between let's say KNN and qLearning approaches.
 
 List of features:
-- [ ] Dynamic data source (choose freely where to get data from)
+- [x] Dynamic data source (choose freely where to get data from)
 - [ ] Dynamic decision logic (choose what model to use)
 - [ ] Backtest visually
 - [ ] Place testnet orders via API
 
 ### DecisionMaker
 
+## Plotting
+
+To plot everything, I will use classes, to make everything organised.
+
+### Chart
+This class will hold the klines, dataPoints/indicators and positions.
+
+### Indicators
+This class will calculate the indicator
+
+### Position
+This class will hold the index, entry price, direction, sl, tp, exit price and profit of the position

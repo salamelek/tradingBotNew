@@ -8,6 +8,7 @@ from matplotlib.patches import Rectangle
 
 from decisionMaker import Knn
 from dataGetter import getForexDataSwissSite
+from PlotClasses import Chart
 
 
 def backtest(data, decisionMaker):
@@ -19,50 +20,19 @@ def backtest(data, decisionMaker):
     pass
 
 
-def plotChart(chart):
+def plotChart(chart, extraSeries=(), dataPoints=((),)):
     """
-    Plots given chart
-
-    :return:
+    Plots given chart and all of its components
     """
 
-    pass
-
-
-def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=(), dataPoints=(())):
     print("Plotting...")
 
     fig = plt.figure()
-    gs = fig.add_gridspec(2, 1, hspace=0, height_ratios=[3, 1])
+    gs = fig.add_gridspec(2, 1, hspace=0, height_ratios=[4, 1])
     axs = gs.subplots(sharex=True)
-    bullish = []
-    bearish = []
-    ranging = []
 
-    for index in range(len(klines)):
-        kline = klines[index]
-
-        coords = (index - 0.5, kline["open"])  # (index, openPrice)
-        width = 1  # 1, because each index is large 1
-        height = kline["close"] - kline["open"]  # closePrice - openPrice
-
-        coordsHl = (((index + 0.5) - hlWidth / 2) - 0.5, kline["low"])
-        heightHl = kline["high"] - kline["low"]
-
-        if height > 0:
-            bullish.append(Rectangle(coords, width, height))
-            bullish.append(Rectangle(coordsHl, hlWidth, heightHl))
-        elif height < 0:
-            bearish.append(Rectangle(coords, width, height))
-            bearish.append(Rectangle(coordsHl, hlWidth, heightHl))
-        else:
-            ranging.append(Rectangle(coords, width, lineHeight))
-
-    axs[0].add_collection(PatchCollection(bullish, edgecolor="none", facecolor=bullishColor))
-    axs[0].add_collection(PatchCollection(bearish, edgecolor="none", facecolor=bearishColor))
-    axs[0].add_collection(PatchCollection(ranging, edgecolor="none", facecolor=rangingColor))
-
-    axs[0].errorbar(0, 1)
+    # plot chart (with indicators and positions)
+    chart.plot(axs)
 
     # plot additional series
     for series in extraSeries:
@@ -71,9 +41,6 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
     # plot given dataPoints
     for dimIndex in range(len(dataPoints[0])):
         axs[0].plot(range(len(dataPoints)), [dp[dimIndex] for dp in dataPoints], label=dimIndex)
-
-    # plot volume
-    axs[1].plot(range(len(klines)), [kline["volume"] for kline in klines])
 
     for ax in axs:
         ax.label_outer()
@@ -98,4 +65,6 @@ if __name__ == '__main__':
 
     brain = Knn(trainKlines)
 
-    plotKlines(klines)
+    chart = Chart(klines)
+    # plotChart(chart)
+    print(chart)
