@@ -29,7 +29,7 @@ def plotChart(chart):
     pass
 
 
-def plotKlines(klines, hlWidth=0.1, lineHeight=0.001, bullishColor="green", bearishColor="red", rangingColor="yellow"):
+def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=[]):
     print("Plotting...")
 
     fig = plt.figure()
@@ -63,6 +63,10 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.001, bullishColor="green", bear
     axs[0].add_collection(PatchCollection(ranging, edgecolor="none", facecolor=rangingColor))
 
     axs[0].errorbar(0, 0)
+
+    # plot additional series
+    for series in extraSeries:
+        axs[0].plot(range(len(series)), series)
 
     # plot volume
     axs[1].plot(range(len(klines)), [kline["volume"] for kline in klines])

@@ -55,6 +55,7 @@ class Knn(DecisionMaker):
 			2) Sma/ema slope
 				The difference between the current sma/ema point and the previous one.
 				Maybe can be calculated as the difference of the sma/ema of close values - sma/ema of open values.
+					Seems that it works this way indeed
 				Can be normalised by setting a max sma/ema slope (the steep candles will not
 				be considered - they are an anomaly).
 			3) Boolean indicators (s&r, idk yet):
@@ -81,16 +82,20 @@ class Knn(DecisionMaker):
 			closeSma = 0
 			openSma = 0
 			for j in range(smaInterval):
-				closeSma += self.trainKlines[i - smaInterval]["close"]
-				openSma += self.trainKlines[i - smaInterval]["open"]
+				closeSma += self.trainKlines[i - j]["close"]
+				openSma += self.trainKlines[i - j]["open"]
 
-			closeSma = sldjfnsldjflsjf
+			closeSma /= smaInterval
+			openSma /= smaInterval
+
+			smaDiff = closeSma - openSma
 
 			kline = self.trainKlines[i]
 
 			dataPoints.append(
 				[
 					kline["close"] - kline["open"],		# price change
+					smaDiff								# sma5 change
 				]
 			)
 
