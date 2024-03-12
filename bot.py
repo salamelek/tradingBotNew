@@ -3,6 +3,8 @@ The main body of the bot, where everything will be run from
 """
 
 import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Rectangle
 
 from decisionMaker import Knn
 from dataGetter import getForexDataSwissSite
@@ -27,9 +29,7 @@ def plotChart(chart):
     pass
 
 
-def plotKlines(
-        klines
-):
+def plotKlines(klines, hlWidth=0.1, lineHeight=0.001, bullishColor="green", bearishColor="red", rangingColor="yellow"):
     print("Plotting...")
 
     fig = plt.figure()
@@ -67,10 +67,6 @@ def plotKlines(
     # plot volume
     axs[1].plot(range(len(klines)), [kline["volume"] for kline in klines])
 
-    # plot given extra series
-    for series in extraSeries:
-        axs[0].plot(range(len(series)), series)
-
     for ax in axs:
         ax.label_outer()
 
@@ -80,12 +76,15 @@ def plotKlines(
     axs[1].grid(True)
     plt.show()
 
+    print("Done!\n")
+
 
 if __name__ == '__main__':
     # get klines
     klines = getForexDataSwissSite()
 
     # split it into training and simulation data
-    divisionIndex = 20000
-    trainKlines = klines[:divisionIndex]
-    simKlines = klines[divisionIndex:]
+    trainKlines = klines[:30000]
+    simKlines = klines[30000:]
+
+    plotKlines(simKlines)
