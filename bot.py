@@ -29,7 +29,7 @@ def plotChart(chart):
     pass
 
 
-def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=[]):
+def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=[], dataPoints=[]):
     print("Plotting...")
 
     fig = plt.figure()
@@ -42,11 +42,11 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
     for index in range(len(klines)):
         kline = klines[index]
 
-        coords = (index, kline["open"])  # (index, openPrice)
+        coords = (index - 0.5, kline["open"])  # (index, openPrice)
         width = 1  # 1, because each index is large 1
         height = kline["close"] - kline["open"]  # closePrice - openPrice
 
-        coordsHl = (((index + 0.5) - hlWidth / 2), kline["low"])
+        coordsHl = (((index + 0.5) - hlWidth / 2) - 0.5, kline["low"])
         heightHl = kline["high"] - kline["low"]
 
         if height > 0:
@@ -68,6 +68,10 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
     for series in extraSeries:
         axs[0].plot(range(len(series)), series)
 
+    # plot given dataPoints
+    for dimIndex in range(len(dataPoints[0])):
+        axs[0].plot(range(len(dataPoints)), [dp[dimIndex] for dp in dataPoints], label=dimIndex)
+
     # plot volume
     axs[1].plot(range(len(klines)), [kline["volume"] for kline in klines])
 
@@ -78,6 +82,7 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
 
     axs[0].grid(True)
     axs[1].grid(True)
+    axs[0].legend()
     plt.show()
 
     print("Done!\n")
@@ -88,7 +93,9 @@ if __name__ == '__main__':
     klines = getForexDataSwissSite()
 
     # split it into training and simulation data
-    trainKlines = klines[:30000]
-    simKlines = klines[30000:]
+    # trainKlines = klines[:30000]
+    # simKlines = klines[30000:]
 
-    plotKlines(simKlines)
+    d = Knn(klines)
+
+    plotKlines(klines, dataPoints=d.dataPoints)

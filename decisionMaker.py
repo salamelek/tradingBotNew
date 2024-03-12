@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 
 class DecisionMaker:
@@ -19,6 +19,31 @@ class DecisionMaker:
 		"""
 
 
+def sma(klines, index, interval, klineValue="close"):
+	"""
+	Returns the sma of the kline at the index "index"
+
+	:param klines: 		series of klines to calculate the sma on
+	:param index: 		index of the kline the sma is wanted
+	:param interval: 	interval of the sma
+	:param klineValue: 	which kline value to consider (default: close)
+	:return: 			returns a float that is the sma of that kline
+	"""
+
+	# exclude the first klines since we can't know the sma5
+	if index < interval - 1:
+		return None
+
+	# calculate the sma
+	sma = 0
+	for j in range(interval):
+		sma += klines[index - j][klineValue]
+
+	sma /= interval
+
+	return sma
+
+
 class Knn(DecisionMaker):
 	def __init__(self, trainKlines):
 		self.trainKlines = trainKlines
@@ -26,7 +51,7 @@ class Knn(DecisionMaker):
 
 	def getPosition(self, inputs):
 		pass
-	
+
 	def getNextKline(self):
 		pass
 
@@ -58,6 +83,8 @@ class Knn(DecisionMaker):
 					Seems that it works this way indeed
 				Can be normalised by setting a max sma/ema slope (the steep candles will not
 				be considered - they are an anomaly).
+				IMPORTANT: here instead of calculating the slope, I subtract the open and close sma,
+				like in price change. It is not exactly the same, but it gets the job done without another loop
 			3) Boolean indicators (s&r, idk yet):
 				Boolean indicators have to be normalised too. In a range [1, -1], the two boolean values would be
 				1 and -1. This means that whatever normalisation we choose, the boolean values will be at the
@@ -73,30 +100,22 @@ class Knn(DecisionMaker):
 		smaInterval = 5
 
 		for i in range(len(self.trainKlines)):
-			# exclude the first klines since we can't know the sma5
-			if i < smaInterval:
-				dataPoints.append(None)
-				continue
-
-			# calculate the sma
-			closeSma = 0
-			openSma = 0
-			for j in range(smaInterval):
-				closeSma += self.trainKlines[i - j]["close"]
-				openSma += self.trainKlines[i - j]["open"]
-
-			closeSma /= smaInterval
-			openSma /= smaInterval
-
-			smaDiff = closeSma - openSma
-
 			kline = self.trainKlines[i]
 
-			dataPoints.append(
-				[
-					kline["close"] - kline["open"],		# price change
-					smaDiff								# sma5 change
-				]
-			)
+			smaOpen = sma(self.trainKlines, i, smaInterval, "open")
+			smaClose = sma(self.trainKlines, i, smaInterval, "close")
+
+			try:
+				smaDiff = smaClose - smaOpen
+			except TypeError:
+				# the sma is None since there is not enough data
+				smaDiff = None
+
+			dp = [
+				kline["close"] - kline["open"], 	# price change
+				smaDiff,  							# sma change
+			]
+
+			dataPoints.append(dp)
 
 		return dataPoints
