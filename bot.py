@@ -13,6 +13,8 @@ def backtest(data, decisionMaker):
     """
     Runs a backtest on given data using given decisionMaker
 
+    Returns a dictionary with all the results of the backtest
+
     :return:
     """
     pass

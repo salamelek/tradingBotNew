@@ -67,3 +67,8 @@ This class will calculate the indicator
 
 ### Position
 This class will hold the index, entry price, direction, sl, tp, exit price and profit of the position
+
+## KNN
+Instead of comparing multiple dataPoints chained, it's better to place chained data in a dataPoint
+and then comparing each data point.
+Example: sma, medians, stuff like that

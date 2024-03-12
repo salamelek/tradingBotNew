@@ -3,6 +3,7 @@ The "brains" of the bot, where the decision-making will be made
 Every decisionMaker is a child class od DecisionMaker and must implement the abstract methods.
 """
 
+import math
 from abc import abstractmethod
 
 
@@ -41,10 +42,32 @@ def sma(klines, index, interval, klineValue="close"):
 	return sma
 
 
+def euclideanDistance(a, b):
+	"""
+	Returns the Euclidean distance of the two given points.
+
+	:param a:
+	:param b:
+	:return:
+	"""
+
+	if len(a) != len(b):
+		raise Exception("The two points must have the same length")
+
+	dist = 0
+
+	for i in range(len(a)):
+		dist += (a[i] - b[i]) ** 2
+
+	return math.sqrt(dist)
+
+
 class Knn(DecisionMaker):
-	def __init__(self, trainKlines):
+	def __init__(self, trainKlines: list, k: int):
 		self.trainKlines = trainKlines
-		self.dataPoints = self.extractDataPoints()
+		self.dataPoints = self.extractDataPoints(self.trainKlines)
+
+		self.k = k
 
 	def getPosition(self, currentKlines):
 		"""
@@ -54,9 +77,15 @@ class Knn(DecisionMaker):
 		:return: 				position (or None, in case of uncertainty)
 		"""
 
-		pass
+		# convert the currentKlines to dataPoints
+		currentDataPoints = self.extractDataPoints(currentKlines)
 
-	def extractDataPoints(self):
+		# get the knn for each dataPoint
+		for dataPoint in currentDataPoints:
+			knn = self.getKnn(dataPoint)
+
+	@staticmethod
+	def extractDataPoints(klines):
 		"""
 		Extract the necessary data points from the klines
 		place them in a 2D list
@@ -96,16 +125,14 @@ class Knn(DecisionMaker):
 		:return:
 		"""
 
-		print("Calculating dataPoints for KNN...")
-
 		smaInterval = 5
 		dataPoints = []
 
-		for i in range(len(self.trainKlines)):
-			kline = self.trainKlines[i]
+		for i in range(len(klines)):
+			kline = klines[i]
 
-			smaOpen = sma(self.trainKlines, i, smaInterval, "open")
-			smaClose = sma(self.trainKlines, i, smaInterval, "close")
+			smaOpen = sma(klines, i, smaInterval, "open")
+			smaClose = sma(klines, i, smaInterval, "close")
 
 			try:
 				smaDiff = smaClose - smaOpen
@@ -120,6 +147,24 @@ class Knn(DecisionMaker):
 
 			dataPoints.append(dp)
 
-		print("Done!\n")
-
 		return dataPoints
+
+	def getKnn(self, dataPoint):
+		"""
+		Returns the k nearest neighbours of the given dataPoint
+		The return is a json containing the data:
+		[{"distance": distance, "index": index}, ...]
+
+		:param dataPoint:
+		:return:
+		"""
+
+		knn = []
+
+		# compare distances with each dataPoint in the training dataset
+		for trainDp in self.dataPoints:
+			distance = euclideanDistance(trainDp, dataPoint)
+
+			# TODO
+
+		return knn
