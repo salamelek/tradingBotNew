@@ -29,7 +29,7 @@ def plotChart(chart):
     pass
 
 
-def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=[], dataPoints=[]):
+def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bearishColor="red", rangingColor="yellow", extraSeries=(), dataPoints=(())):
     print("Plotting...")
 
     fig = plt.figure()
@@ -62,7 +62,7 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
     axs[0].add_collection(PatchCollection(bearish, edgecolor="none", facecolor=bearishColor))
     axs[0].add_collection(PatchCollection(ranging, edgecolor="none", facecolor=rangingColor))
 
-    axs[0].errorbar(0, 0)
+    axs[0].errorbar(0, 1)
 
     # plot additional series
     for series in extraSeries:
@@ -82,7 +82,7 @@ def plotKlines(klines, hlWidth=0.1, lineHeight=0.0001, bullishColor="green", bea
 
     axs[0].grid(True)
     axs[1].grid(True)
-    axs[0].legend()
+    # axs[0].legend()
     plt.show()
 
     print("Done!\n")
@@ -93,9 +93,9 @@ if __name__ == '__main__':
     klines = getForexDataSwissSite()
 
     # split it into training and simulation data
-    # trainKlines = klines[:30000]
-    # simKlines = klines[30000:]
+    trainKlines = klines[:30000]
+    simKlines = klines[30000:]
 
-    d = Knn(klines)
+    brain = Knn(trainKlines)
 
-    plotKlines(klines, dataPoints=d.dataPoints)
+    plotKlines(klines)

@@ -95,9 +95,10 @@ class Knn(DecisionMaker):
 		:return:
 		"""
 
-		dataPoints = []
+		print("Calculating dataPoints for KNN...")
 
 		smaInterval = 5
+		dataPoints = []
 
 		for i in range(len(self.trainKlines)):
 			kline = self.trainKlines[i]
@@ -117,5 +118,7 @@ class Knn(DecisionMaker):
 			]
 
 			dataPoints.append(dp)
+
+		print("Done!\n")
 
 		return dataPoints
