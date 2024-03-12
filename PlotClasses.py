@@ -1,3 +1,7 @@
+"""
+The classes that are used primarily for plotting and displaying info.
+"""
+
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle

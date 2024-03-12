@@ -1,3 +1,8 @@
+"""
+The "brains" of the bot, where the decision-making will be made
+Every decisionMaker is a child class od DecisionMaker and must implement the abstract methods.
+"""
+
 from abc import abstractmethod
 
 
@@ -6,14 +11,6 @@ class DecisionMaker:
 	def getPosition(self, currentKlines):
 		"""
 		Returns the best calculated position given the inputs
-
-		:return:
-		"""
-
-	@abstractmethod
-	def getNextKline(self):
-		"""
-		Returns the next calculated kline
 
 		:return:
 		"""
@@ -49,10 +46,14 @@ class Knn(DecisionMaker):
 		self.trainKlines = trainKlines
 		self.dataPoints = self.extractDataPoints()
 
-	def getPosition(self, inputs):
-		pass
+	def getPosition(self, currentKlines):
+		"""
+		Returns the optimal position to take at the end of the given klines series.
 
-	def getNextKline(self):
+		:param currentKlines: 	a list of klines
+		:return: 				position (or None, in case of uncertainty)
+		"""
+
 		pass
 
 	def extractDataPoints(self):

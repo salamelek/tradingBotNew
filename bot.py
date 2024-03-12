@@ -3,8 +3,6 @@ The main body of the bot, where everything will be run from
 """
 
 import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Rectangle
 
 from decisionMaker import Knn
 from dataGetter import getForexDataSwissSite
