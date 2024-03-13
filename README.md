@@ -41,6 +41,20 @@ But how to actually store the data in a json format?
 I think that approach 2 is completely useless, so I won't consider it. Both the 1st and 3rd approach are valid,
 but looping through all the candles is better I think, so I'll use the approach 1.
 
+I was told I should also add duration data to the klines and also a description.
+Since this data is the same for every kline, I could just add it as a header, like the example below:
+```json
+{
+    "info": {"duration": 15*60, "pair": "EURUSDT"}, 
+    "klineData": [
+        {"timestamp": 2398..., "open": 123, ...}, 
+        {"timestamp": 2398..., "open": 123, ...}, 
+        {"timestamp": 2398..., "open": 123, ...},
+        ...
+    ]
+}
+```
+
 ### Bot
 
 I want the bot to be completely modular: if you want to change the data source, just change the connector.
@@ -72,3 +86,16 @@ This class will hold the index, entry price, direction, sl, tp, exit price and p
 Instead of comparing multiple dataPoints chained, it's better to place chained data in a dataPoint
 and then comparing each data point.
 Example: sma, medians, stuff like that
+
+### Deciding if a set of nn is acceptable
+When we get a list of the knn, they all have a distance to the origin. Based on that distance we
+have to decide if the prediction will be accurate enough. Here are a few ways:
+1) Compare the best distance to the threshold
+2) Compare the worst distance to the threshold
+3) Compare the mean distance to the threshold
+4) Any other combination/function
+
+### Getting a prediction
+Once we have the knn and we know that they are decent, we proceed to simulate an open position at each nn.
+The parameters of such positions are accessible in config.py. 
+The position will be simulated and the return will be that position with the correct direction.

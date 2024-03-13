@@ -6,6 +6,8 @@ Every decisionMaker is a child class od DecisionMaker and must implement the abs
 import math
 from abc import abstractmethod
 
+from config import positionSimConfig
+
 
 class DecisionMaker:
 	@abstractmethod
@@ -63,11 +65,37 @@ def euclideanDistance(a, b):
 
 
 class Knn(DecisionMaker):
-	def __init__(self, trainKlines: list, k: int):
+	def __init__(self, trainKlines: list, k: int, threshold: float, positionParams=positionSimConfig):
+		"""
+		:param trainKlines:
+		:param k:
+		:param threshold:
+		:param positionParams: the parameters of the simulated positions
+			"sl": stop loss of the position
+			"tp": take profit of the position
+			"maxLength": the maximum number of klines to conclude the position
+				MaxLength is used so the position does not get approval
+				if it gets filled in like 21386 days from when it was placed.
+			"minLength": the minimum number of klines to conclude the position
+				MinLength is used so the position does not get approval
+				if it gets filled in like 0 seconds from when it was placed.
+				This is it avoid sudden spikes and uncertainty.
+				Anyhow, the default for this should be low (1-3), especially when using
+				small tp/sl
+			"max chop": the maximum allowed chop in the position
+				I don't actually know if I'll use this (it may be useless)
+				The idea behind this is to avoid the price to fluctuate while we are in a position.
+				If we want to use the results of a position as a prediction, it has to be as clean as possible.
+				This of course would limit the number of positions, but maybe the profit factor would increase.
+		"""
+
 		self.trainKlines = trainKlines
 		self.dataPoints = self.extractDataPoints(self.trainKlines)
 
 		self.k = k
+		self.threshold = threshold
+
+		self.positionParams = positionParams
 
 	def getPosition(self, currentKlines):
 		"""
@@ -81,8 +109,27 @@ class Knn(DecisionMaker):
 		currentDataPoints = self.extractDataPoints(currentKlines)
 
 		# get the knn for each dataPoint
-		for dataPoint in currentDataPoints:
-			knn = self.getKnn(dataPoint)
+		for i in range(len(currentDataPoints)):
+			dataPoint = currentDataPoints[i]
+			knn = self.getKnn(dataPoint, i)
+
+			# check if the nn are acceptable
+			meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
+			# bestDist = knn[0]["distance"]  # least distance
+			# worstDist = knn[-1]["distance"]  # worst distance
+
+			if meanDist > self.threshold:
+				# nn was not acceptable
+				continue
+
+			# simulate position
+			entryPrice = self.trainKlines[i]["close"]
+
+			# loop through every kline after the position opening and check if it hits the sl or tp
+			for posIndex in range(1, self.positionParams["maxLength"]):
+				klinesIndex = posIndex + i
+				currentLow = self.trainKlines[klinesIndex]["low"]
+				currentHigh = self.trainKlines[klinesIndex]["high"]
 
 	@staticmethod
 	def extractDataPoints(klines):
@@ -149,12 +196,13 @@ class Knn(DecisionMaker):
 
 		return dataPoints
 
-	def getKnn(self, dataPoint):
+	def getKnn(self, dataPoint, index):
 		"""
 		Returns the k nearest neighbours of the given dataPoint
 		The return is a json containing the data:
 		[{"distance": distance, "index": index}, ...]
 
+		:param index:
 		:param dataPoint:
 		:return:
 		"""
@@ -164,7 +212,19 @@ class Knn(DecisionMaker):
 		# compare distances with each dataPoint in the training dataset
 		for trainDp in self.dataPoints:
 			distance = euclideanDistance(trainDp, dataPoint)
+			neighbour = {"distance": distance, "index": index}
 
-			# TODO
+			# if the list is still empty, just append the neighbour
+			if len(knn) < self.k:
+				knn.append(neighbour)
+				continue
+
+			# sort the neighbours (for easier access)
+			# lower distance first, higher at the end
+			knn.sort(key=lambda x: x["distance"], reverse=True)
+
+			# replace the worst neighbour with the better one
+			if distance < knn[-1]["distance"]:
+				knn[-1] = neighbour
 
 		return knn
