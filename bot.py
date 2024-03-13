@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from decisionMaker import Knn
 from dataGetter import getForexDataSwissSite
-from PlotClasses import Chart
+from tradingClasses import Chart
 
 
 def backtest(data, decisionMaker):
@@ -60,11 +60,15 @@ if __name__ == '__main__':
     klines = getForexDataSwissSite()
 
     # split it into training and simulation data
-    trainKlines = klines[:30000]
-    simKlines = klines[30000:]
+    trainKlines = klines[:34500]
+    simKlines = klines[34500:]
 
-    brain = Knn(trainKlines)
+    brain = Knn(trainKlines, k=3, threshold=0.00001)
+
+    pos = brain.getPosition(simKlines)
+
+    print(pos)
 
     chart = Chart(klines)
     # plotChart(chart)
-    print(chart)
+    # print(chart)

@@ -7,6 +7,7 @@ import math
 from abc import abstractmethod
 
 from config import positionSimConfig
+from tradingClasses import Position
 
 
 class DecisionMaker:
@@ -105,6 +106,8 @@ class Knn(DecisionMaker):
 		:return: 				position (or None, in case of uncertainty)
 		"""
 
+		positions = []
+
 		# convert the currentKlines to dataPoints
 		currentDataPoints = self.extractDataPoints(currentKlines)
 
@@ -112,6 +115,10 @@ class Knn(DecisionMaker):
 		for i in range(len(currentDataPoints)):
 			dataPoint = currentDataPoints[i]
 			knn = self.getKnn(dataPoint, i)
+
+			if not knn:
+				positions.append(None)
+				continue
 
 			# check if the nn are acceptable
 			meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
@@ -125,11 +132,48 @@ class Knn(DecisionMaker):
 			# simulate position
 			entryPrice = self.trainKlines[i]["close"]
 
+			# we assume that we are making a long position (doesn't matter anyway)
+			tp = entryPrice + (entryPrice / 100) * self.positionParams["tp"]
+			sl = entryPrice - (entryPrice / 100) * self.positionParams["sl"]
+
 			# loop through every kline after the position opening and check if it hits the sl or tp
 			for posIndex in range(1, self.positionParams["maxLength"]):
 				klinesIndex = posIndex + i
 				currentLow = self.trainKlines[klinesIndex]["low"]
 				currentHigh = self.trainKlines[klinesIndex]["high"]
+
+				# if both high and low go over the tp/sl, then it's inconclusive
+				if currentLow < sl and currentHigh > tp:
+					positions.append(None)
+
+				# The position should have been short
+				if currentLow < sl:
+					positions.append(Position(
+						index=i,
+						direction="short",
+						entryPrice=entryPrice,
+						exitPrice=sl,
+						profit=None,
+						sl=self.positionParams["tp"], 	# yes, they are not inverted
+						tp=self.positionParams["sl"]
+					))
+
+				# The position is correct (long)
+				if currentHigh > tp:
+					positions.append(Position(
+						index=i,
+						direction="long",
+						entryPrice=entryPrice,
+						exitPrice=tp,
+						profit=None,
+						sl=self.positionParams["sl"],
+						tp=self.positionParams["tp"]
+					))
+
+				# if nothing happens, the position is too long (inconclusive)
+				positions.append(None)
+
+		return positions
 
 	@staticmethod
 	def extractDataPoints(klines):
@@ -211,7 +255,12 @@ class Knn(DecisionMaker):
 
 		# compare distances with each dataPoint in the training dataset
 		for trainDp in self.dataPoints:
-			distance = euclideanDistance(trainDp, dataPoint)
+			try:
+				distance = euclideanDistance(trainDp, dataPoint)
+			except TypeError:
+				# the dp is not calculated yet
+				continue
+
 			neighbour = {"distance": distance, "index": index}
 
 			# if the list is still empty, just append the neighbour

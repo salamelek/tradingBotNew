@@ -87,6 +87,8 @@ Instead of comparing multiple dataPoints chained, it's better to place chained d
 and then comparing each data point.
 Example: sma, medians, stuff like that
 
+TODO: implement lorenzian distance
+
 ### Deciding if a set of nn is acceptable
 When we get a list of the knn, they all have a distance to the origin. Based on that distance we
 have to decide if the prediction will be accurate enough. Here are a few ways:
@@ -99,3 +101,9 @@ have to decide if the prediction will be accurate enough. Here are a few ways:
 Once we have the knn and we know that they are decent, we proceed to simulate an open position at each nn.
 The parameters of such positions are accessible in config.py. 
 The position will be simulated and the return will be that position with the correct direction.
+
+> The tp and sl parameters are set in PERCENTAGES
+
+The positions will be discarded if the sl and tp are hit in the same kline.
+I could check the lower timeframes to know which one gets hit first, but
+the prediction would probably be too chaotic anyway

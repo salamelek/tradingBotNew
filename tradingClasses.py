@@ -2,7 +2,6 @@
 The classes that are used primarily for plotting and displaying info.
 """
 
-import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
@@ -86,11 +85,18 @@ class Indicator:
 
 
 class Position:
-    def __init__(self):
-        pass
+    def __init__(self, index, entryPrice, direction, sl, tp, exitPrice, profit):
+        self.index = index
+        self.entryPrice = entryPrice
+        self.direction = direction
+        self.sl = sl
+        self.tp = tp
+        self.exitPrice = exitPrice
+        self.profit = profit
 
     def __str__(self):
-        pass
+        return (f"{self.direction} position at index {self.index}\n"
+                f"Entry price: {self.entryPrice}\nExit price: {self.exitPrice}")
 
     def plot(self, axs):
         pass
