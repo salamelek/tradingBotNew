@@ -5,6 +5,8 @@ The classes that are used primarily for plotting and displaying info.
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
+from config import positionSimConfig
+
 
 class Chart:
     def __init__(self, klines: list, indicators=(), positions=(), plotIndicators=True, plotPositions=True):
@@ -68,6 +70,9 @@ some other info here maybe :>
         # plot positions
         if self.plotPositions:
             for position in self.positions:
+                if position is None:
+                    continue
+
                 position.plot(axs)
 
         axs[0].errorbar(0, 1)
@@ -85,8 +90,9 @@ class Indicator:
 
 
 class Position:
-    def __init__(self, index, entryPrice, direction, sl, tp, exitPrice, profit):
-        self.index = index
+    def __init__(self, entryIndex, exitIndex, entryPrice, direction, sl, tp, exitPrice, profit):
+        self.entryIndex = entryIndex
+        self.exitIndex = exitIndex
         self.entryPrice = entryPrice
         self.direction = direction
         self.sl = sl
@@ -95,8 +101,43 @@ class Position:
         self.profit = profit
 
     def __str__(self):
-        return (f"{self.direction} position at index {self.index}\n"
-                f"Entry price: {self.entryPrice}\nExit price: {self.exitPrice}")
+        return (f"{self.direction} position at index {self.entryIndex}\n"
+                f"\tEntry price: {self.entryPrice}\n\tExit price: {self.exitPrice}")
 
     def plot(self, axs):
-        pass
+        positionSquareOpacity = 0.2
+
+        width = positionSimConfig["maxLength"]
+        origin = (self.entryIndex, self.entryPrice)
+
+        greenRects = []
+        redRects = []
+
+        print(self)
+
+        if self.direction == "long":
+            upperPrice = self.entryPrice + (self.entryPrice / 100) * self.tp
+            lowerPrice = self.entryPrice - (self.entryPrice / 100) * self.sl
+
+            upperLimit = upperPrice - self.entryPrice
+            lowerLimit = lowerPrice - self.entryPrice
+
+            greenRects.append(Rectangle(origin, width, upperLimit))
+            redRects.append(Rectangle(origin, width, lowerLimit))
+
+        elif self.direction == "short":
+            upperPrice = self.entryPrice + (self.entryPrice / 100) * self.sl
+            lowerPrice = self.entryPrice - (self.entryPrice / 100) * self.tp
+
+            upperLimit = upperPrice - self.entryPrice
+            lowerLimit = lowerPrice - self.entryPrice
+
+            greenRects.append(Rectangle(origin, width, lowerLimit))
+            redRects.append(Rectangle(origin, width, upperLimit))
+
+        else:
+            raise Exception("Invalid direction")
+
+        axs[0].add_collection(PatchCollection(greenRects, edgecolor="none", facecolor="green", alpha=positionSquareOpacity))
+        axs[0].add_collection(PatchCollection(redRects, edgecolor="none", facecolor="red", alpha=positionSquareOpacity))
+

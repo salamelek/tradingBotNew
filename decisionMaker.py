@@ -6,13 +6,13 @@ Every decisionMaker is a child class od DecisionMaker and must implement the abs
 import math
 from abc import abstractmethod
 
-from config import positionSimConfig
+from config import positionSimConfig, knnConfig
 from tradingClasses import Position
 
 
 class DecisionMaker:
 	@abstractmethod
-	def getPosition(self, currentKlines):
+	def getPosition(self, currentKlines, currentKlineIndex):
 		"""
 		Returns the best calculated position given the inputs
 
@@ -66,11 +66,9 @@ def euclideanDistance(a, b):
 
 
 class Knn(DecisionMaker):
-	def __init__(self, trainKlines: list, k: int, threshold: float, positionParams=positionSimConfig):
+	def __init__(self, trainKlines: list, knnParams=knnConfig, positionParams=positionSimConfig):
 		"""
 		:param trainKlines:
-		:param k:
-		:param threshold:
 		:param positionParams: the parameters of the simulated positions
 			"sl": stop loss of the position
 			"tp": take profit of the position
@@ -91,87 +89,49 @@ class Knn(DecisionMaker):
 		"""
 
 		self.trainKlines = trainKlines
-		self.dataPoints = self.extractDataPoints(self.trainKlines)
+		self.trainDataPoints = self.extractDataPoints(self.trainKlines)
 
-		self.k = k
-		self.threshold = threshold
+		self.knnParams = knnParams
 
 		self.positionParams = positionParams
 
-	def getPosition(self, currentKlines):
+	def getPosition(self, currentKlines, currentKlineIndex):
 		"""
-		Returns the optimal position to take at the end of the given klines series.
+		Returns the optimal position to take at the given index of the given klines
 
+		:param currentKlineIndex:
 		:param currentKlines: 	a list of klines
 		:return: 				position (or None, in case of uncertainty)
 		"""
 
-		positions = []
-
 		# convert the currentKlines to dataPoints
 		currentDataPoints = self.extractDataPoints(currentKlines)
 
-		# get the knn for each dataPoint
-		for i in range(len(currentDataPoints)):
-			dataPoint = currentDataPoints[i]
-			knn = self.getKnn(dataPoint, i)
+		# get the knn for the last kline
+		knn = self.getKnn(currentDataPoints[currentKlineIndex])
 
-			if not knn:
-				positions.append(None)
-				continue
+		if not knn:
+			# the knn list is empty
+			print("the knn list is empty")
+			return None
 
-			# check if the nn are acceptable
-			meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
-			# bestDist = knn[0]["distance"]  # least distance
-			# worstDist = knn[-1]["distance"]  # worst distance
+		# check if the nn are acceptable
+		meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
+		# bestDist = knn[0]["distance"]  # least distance
+		# worstDist = knn[-1]["distance"]  # worst distance
 
-			if meanDist > self.threshold:
-				# nn was not acceptable
-				continue
+		if meanDist > self.knnParams["threshold"]:
+			# nn was not acceptable
+			print("nn was not acceptable")
+			return None
 
-			# simulate position
-			entryPrice = self.trainKlines[i]["close"]
+		# for each nn simulate the position
+		positions = []
+		for nn in knn:
+			pos = self.simulatePosition(nn)
+			positions.append(pos)
 
-			# we assume that we are making a long position (doesn't matter anyway)
-			tp = entryPrice + (entryPrice / 100) * self.positionParams["tp"]
-			sl = entryPrice - (entryPrice / 100) * self.positionParams["sl"]
-
-			# loop through every kline after the position opening and check if it hits the sl or tp
-			for posIndex in range(1, self.positionParams["maxLength"]):
-				klinesIndex = posIndex + i
-				currentLow = self.trainKlines[klinesIndex]["low"]
-				currentHigh = self.trainKlines[klinesIndex]["high"]
-
-				# if both high and low go over the tp/sl, then it's inconclusive
-				if currentLow < sl and currentHigh > tp:
-					positions.append(None)
-
-				# The position should have been short
-				if currentLow < sl:
-					positions.append(Position(
-						index=i,
-						direction="short",
-						entryPrice=entryPrice,
-						exitPrice=sl,
-						profit=None,
-						sl=self.positionParams["tp"], 	# yes, they are not inverted
-						tp=self.positionParams["sl"]
-					))
-
-				# The position is correct (long)
-				if currentHigh > tp:
-					positions.append(Position(
-						index=i,
-						direction="long",
-						entryPrice=entryPrice,
-						exitPrice=tp,
-						profit=None,
-						sl=self.positionParams["sl"],
-						tp=self.positionParams["tp"]
-					))
-
-				# if nothing happens, the position is too long (inconclusive)
-				positions.append(None)
+		# TODO return only one position (check if they agree on what to do)
 
 		return positions
 
@@ -240,13 +200,12 @@ class Knn(DecisionMaker):
 
 		return dataPoints
 
-	def getKnn(self, dataPoint, index):
+	def getKnn(self, dataPoint):
 		"""
 		Returns the k nearest neighbours of the given dataPoint
 		The return is a json containing the data:
 		[{"distance": distance, "index": index}, ...]
 
-		:param index:
 		:param dataPoint:
 		:return:
 		"""
@@ -254,7 +213,9 @@ class Knn(DecisionMaker):
 		knn = []
 
 		# compare distances with each dataPoint in the training dataset
-		for trainDp in self.dataPoints:
+		for index in range(len(self.trainDataPoints)):
+			trainDp = self.trainDataPoints[index]
+
 			try:
 				distance = euclideanDistance(trainDp, dataPoint)
 			except TypeError:
@@ -264,16 +225,77 @@ class Knn(DecisionMaker):
 			neighbour = {"distance": distance, "index": index}
 
 			# if the list is still empty, just append the neighbour
-			if len(knn) < self.k:
+			if len(knn) < self.knnParams["k"]:
 				knn.append(neighbour)
 				continue
 
 			# sort the neighbours (for easier access)
 			# lower distance first, higher at the end
-			knn.sort(key=lambda x: x["distance"], reverse=True)
+			knn = sorted(knn, key=lambda x: x["distance"])
 
 			# replace the worst neighbour with the better one
 			if distance < knn[-1]["distance"]:
 				knn[-1] = neighbour
 
 		return knn
+
+	def simulatePosition(self, nn):
+		"""
+		Simulates the position of the given nearest neighbour.
+		It places a long position on the close price of index of nn.
+		If the position is "good" (it's not inconclusive) and it makes profit, this will return a long position.
+		But if it's conclusive, and it doesn't make profit it returns a short position.
+		If the position is inconclusive, it will return None.
+
+		:param nn:
+		:return:
+		"""
+
+		posOpenIndex: int = nn["index"]
+		entryPrice = self.trainKlines[posOpenIndex]["close"]
+
+		# we assume that we are making a long position (doesn't matter anyway)
+		tp = entryPrice + (entryPrice / 100) * self.positionParams["tp"]
+		sl = entryPrice - (entryPrice / 100) * self.positionParams["sl"]
+
+		# loop through every kline after the position opening and check if it hits the sl or tp
+		for posCurrIndex in range(1, self.positionParams["maxLength"]):
+			klinesIndex = posCurrIndex + posOpenIndex
+
+			currentLow = self.trainKlines[klinesIndex]["low"]
+			currentHigh = self.trainKlines[klinesIndex]["high"]
+
+			# if both high and low go over the tp/sl, then it's inconclusive
+			if currentLow < sl and currentHigh > tp:
+				print("tp and sl bot got hit")
+				return None
+
+			# The position should have been short
+			if currentLow < sl:
+				return Position(
+					entryIndex=posOpenIndex,
+					exitIndex=klinesIndex,
+					direction="short",
+					entryPrice=entryPrice,
+					exitPrice=sl,
+					profit=None,
+					sl=self.positionParams["tp"],  # yes, they are not inverted
+					tp=self.positionParams["sl"]
+				)
+
+			# The position is correct (long)
+			if currentHigh > tp:
+				return Position(
+					entryIndex=posOpenIndex,
+					exitIndex=klinesIndex,
+					direction="long",
+					entryPrice=entryPrice,
+					exitPrice=tp,
+					profit=None,
+					sl=self.positionParams["sl"],
+					tp=self.positionParams["tp"]
+				)
+
+		# if nothing happens, the position is too long (inconclusive)
+		print(f"position is too long {nn}")
+		return None
