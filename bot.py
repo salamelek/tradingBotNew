@@ -65,8 +65,11 @@ if __name__ == '__main__':
 
     brain = Knn(trainKlines)
 
-    positions = brain.getPosition(simKlines, 218)
+    predictedPositions = []
+    for i in range(100):
+        positions = brain.getPosition(simKlines, i)
+        predictedPositions.append(positions["predicted"])
 
-    chart = Chart(simKlines, positions=[positions["predicted"]])
+    chart = Chart(simKlines, positions=predictedPositions)
     plotChart(chart)
     # print(chart)

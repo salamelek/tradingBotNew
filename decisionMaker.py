@@ -113,7 +113,7 @@ class Knn(DecisionMaker):
 		if not knn:
 			# the knn list is empty
 			print("the knn list is empty")
-			return None
+			return {"predicted": None, "considered": None}
 
 		# check if the nn are acceptable
 		meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
@@ -167,7 +167,7 @@ class Knn(DecisionMaker):
 				profit=None
 			)
 		else:
-			print("ratio was shit")
+			print("Ratio was shit")
 			predictedPos = None
 
 		return {"predicted": predictedPos, "considered": consideredPos}
@@ -299,8 +299,12 @@ class Knn(DecisionMaker):
 		for posCurrIndex in range(1, self.positionParams["maxLength"]):
 			klinesIndex = posCurrIndex + posOpenIndex
 
-			currentLow = self.trainKlines[klinesIndex]["low"]
-			currentHigh = self.trainKlines[klinesIndex]["high"]
+			try:
+				currentLow = self.trainKlines[klinesIndex]["low"]
+				currentHigh = self.trainKlines[klinesIndex]["high"]
+			except IndexError:
+				# reached the end of the chart
+				return None
 
 			# if both high and low go over the tp/sl, then it's inconclusive
 			if currentLow < sl and currentHigh > tp:
