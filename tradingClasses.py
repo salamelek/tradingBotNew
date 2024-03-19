@@ -68,7 +68,7 @@ some other info here maybe :>
                 indicator.plot(axs)
 
         # plot positions
-        if self.plotPositions:
+        if self.plotPositions and self.positions:
             for position in self.positions:
                 if position is None:
                     continue
@@ -116,21 +116,15 @@ class Position:
         print(self)
 
         if self.direction == "long":
-            upperPrice = self.entryPrice + (self.entryPrice / 100) * self.tp
-            lowerPrice = self.entryPrice - (self.entryPrice / 100) * self.sl
-
-            upperLimit = upperPrice - self.entryPrice
-            lowerLimit = lowerPrice - self.entryPrice
+            upperLimit = (self.entryPrice * self.tp) / 100
+            lowerLimit = (self.entryPrice * self.sl) / -100
 
             greenRects.append(Rectangle(origin, width, upperLimit))
             redRects.append(Rectangle(origin, width, lowerLimit))
 
         elif self.direction == "short":
-            upperPrice = self.entryPrice + (self.entryPrice / 100) * self.sl
-            lowerPrice = self.entryPrice - (self.entryPrice / 100) * self.tp
-
-            upperLimit = upperPrice - self.entryPrice
-            lowerLimit = lowerPrice - self.entryPrice
+            upperLimit = (self.entryPrice * self.sl) / 100
+            lowerLimit = (self.entryPrice * self.tp) / -100
 
             greenRects.append(Rectangle(origin, width, lowerLimit))
             redRects.append(Rectangle(origin, width, upperLimit))
@@ -138,6 +132,6 @@ class Position:
         else:
             raise Exception("Invalid direction")
 
-        axs[0].add_collection(PatchCollection(greenRects, edgecolor="none", facecolor="green", alpha=positionSquareOpacity))
+        axs[0].add_collection(
+            PatchCollection(greenRects, edgecolor="none", facecolor="green", alpha=positionSquareOpacity))
         axs[0].add_collection(PatchCollection(redRects, edgecolor="none", facecolor="red", alpha=positionSquareOpacity))
-

@@ -58,7 +58,6 @@ def plotChart(chart, extraSeries=(), dataPoints=((),)):
 if __name__ == '__main__':
     # get klines
     klines = getForexDataSwissSite()
-    klines = klines[190:]
 
     # split it into training and simulation data
     trainKlines = klines[:34500]
@@ -66,8 +65,8 @@ if __name__ == '__main__':
 
     brain = Knn(trainKlines)
 
-    positions = brain.getPosition(simKlines, 11)
+    positions = brain.getPosition(simKlines, 218)
 
-    chart = Chart(klines, positions=positions)
+    chart = Chart(simKlines, positions=[positions["predicted"]])
     plotChart(chart)
     # print(chart)

@@ -45,11 +45,11 @@ I was told I should also add duration data to the klines and also a description.
 Since this data is the same for every kline, I could just add it as a header, like the example below:
 ```json
 {
-    "info": {"duration": 15*60, "pair": "EURUSDT"}, 
+    "info": {"duration": 900, "pair": "EURUSDT"}, 
     "klineData": [
-        {"timestamp": 2398..., "open": 123, ...}, 
-        {"timestamp": 2398..., "open": 123, ...}, 
-        {"timestamp": 2398..., "open": 123, ...},
+        {"timestamp": 123, "open": 123, ...}, 
+        {"timestamp": 123, "open": 123, ...}, 
+        {"timestamp": 123, "open": 123, ...},
         ...
     ]
 }
@@ -106,4 +106,24 @@ The position will be simulated and the return will be that position with the cor
 
 The positions will be discarded if the sl and tp are hit in the same kline.
 I could check the lower timeframes to know which one gets hit first, but
-the prediction would probably be too chaotic anyway
+the prediction would probably be too chaotic anyway.
+Then we check if there is at least `sameDirectionRatio` positions of the same side.
+If that's the case, we return a position with that direction.
+
+## Config file
+
+### PositionSimConfig
+
+A dict that holds the details about the simulated positions for knn.
+The bot will place such positions at the nn, to check if it should be long or short.
+
+### knnConfig
+
+The details of the knn model
+
+`k`: how many nn will be considered
+
+`threshold`: the maximum allowed distance between the nn and the origin point
+
+`sameDirectionRatio`: at least how many positions must point in the same direction
+for it to be considered. (eg. long, long, short is 66% same direction)

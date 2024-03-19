@@ -97,11 +97,11 @@ class Knn(DecisionMaker):
 
 	def getPosition(self, currentKlines, currentKlineIndex):
 		"""
-		Returns the optimal position to take at the given index of the given klines
+		Returns a dict containing both the predicted consideredPos and the considered consideredPos
 
-		:param currentKlineIndex:
-		:param currentKlines: 	a list of klines
-		:return: 				position (or None, in case of uncertainty)
+		:param currentKlineIndex:	index of the wanted kline in the simulation klines
+		:param currentKlines: 		list of simulation klines
+		:return: 					{"predicted": position, "considered": []}
 		"""
 
 		# convert the currentKlines to dataPoints
@@ -126,14 +126,51 @@ class Knn(DecisionMaker):
 			return None
 
 		# for each nn simulate the position
-		positions = []
+		consideredPos = []
 		for nn in knn:
 			pos = self.simulatePosition(nn)
-			positions.append(pos)
+			if pos is not None:
+				consideredPos.append(pos)
 
-		# TODO return only one position (check if they agree on what to do)
+		# check the general direction of the positions and if it's good enough
+		longPosCount = 0
+		shortPosCount = 0
 
-		return positions
+		for pos in consideredPos:
+			if pos.direction == "long":
+				longPosCount += 1
+
+			elif pos.direction == "short":
+				shortPosCount += 1
+
+			else:
+				raise Exception("How tf does this happen? The position is neither long nor short")
+
+		if longPosCount > shortPosCount:
+			ratio = longPosCount / (longPosCount + shortPosCount)
+			direction = "long"
+		elif longPosCount < shortPosCount:
+			ratio = shortPosCount / (longPosCount + shortPosCount)
+			direction = "short"
+		else:
+			return {"predicted": None, "considered": consideredPos}
+
+		if ratio > knnConfig["sameDirectionRatio"]:
+			predictedPos = Position(
+				entryIndex=currentKlineIndex + 1, 	# +1 because
+				exitIndex=None, 					# we don't know
+				entryPrice=currentKlines[currentKlineIndex + 1]["open"],
+				direction=direction,
+				sl=positionSimConfig["sl"],
+				tp=positionSimConfig["tp"],
+				exitPrice=None,
+				profit=None
+			)
+		else:
+			print("ratio was shit")
+			predictedPos = None
+
+		return {"predicted": predictedPos, "considered": consideredPos}
 
 	@staticmethod
 	def extractDataPoints(klines):

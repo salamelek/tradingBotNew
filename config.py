@@ -12,5 +12,5 @@ positionSimConfig = {
 knnConfig = {
     "k": 5,
     "threshold": 1,
-    "sameDirectionRatio": 0.75
+    "sameDirectionRatio": 0.5
 }
