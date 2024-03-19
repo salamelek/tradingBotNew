@@ -10,7 +10,7 @@ positionSimConfig = {
 
 # the parameters for the knn algo
 knnConfig = {
-    "k": 5,
-    "threshold": 1,
-    "sameDirectionRatio": 0.75
+    "k": 7,
+    "threshold": 0.000005,
+    "sameDirectionRatio": 0.9
 }

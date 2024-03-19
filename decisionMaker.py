@@ -123,7 +123,7 @@ class Knn(DecisionMaker):
 		if meanDist > self.knnParams["threshold"]:
 			# nn was not acceptable
 			print("nn was not acceptable")
-			return None
+			return {"predicted": None, "considered": None}
 
 		# for each nn simulate the position
 		consideredPos = []
@@ -156,6 +156,7 @@ class Knn(DecisionMaker):
 			return {"predicted": None, "considered": consideredPos}
 
 		if ratio > knnConfig["sameDirectionRatio"]:
+			print("Got a position!")
 			predictedPos = Position(
 				entryIndex=currentKlineIndex + 1, 	# +1 because
 				exitIndex=None, 					# we don't know
@@ -338,5 +339,5 @@ class Knn(DecisionMaker):
 				)
 
 		# if nothing happens, the position is too long (inconclusive)
-		print(f"position is too long {nn}")
+		# print(f"position is too long")
 		return None

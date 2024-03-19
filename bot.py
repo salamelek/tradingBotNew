@@ -66,7 +66,7 @@ if __name__ == '__main__':
     brain = Knn(trainKlines)
 
     predictedPositions = []
-    for i in range(100):
+    for i in range(440):
         positions = brain.getPosition(simKlines, i)
         predictedPositions.append(positions["predicted"])
 
