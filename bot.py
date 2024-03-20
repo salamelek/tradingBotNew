@@ -74,8 +74,6 @@ if __name__ == '__main__':
     for i in range(30, 70):
         positions = brain.getPosition(simKlines, i)
         predictedPositions.append(positions["predicted"])
-        if i % 10 == 0:
-            print(f"{i}/1000")
 
     chart = Chart(simKlines, positions=predictedPositions)
     plotChart(chart)

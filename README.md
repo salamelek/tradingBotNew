@@ -127,10 +127,3 @@ The details of the knn model
 
 `sameDirectionRatio`: at least how many positions must point in the same direction
 for it to be considered. (eg. long, long, short is 66% same direction)
-
-## Problems
-
-1) when the candles are very small and the market is moving laterally,
-the dataPoints are very close to the train ones. This means that the bot
-places many positions in dead spots, where the price is ranging and is not
-very predictable
