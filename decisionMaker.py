@@ -156,10 +156,10 @@ class Knn(DecisionMaker):
 		else:
 			return {"predicted": None, "considered": consideredPos}
 
-		if ratio > knnConfig["sameDirectionRatio"]:
+		if ratio >= knnConfig["sameDirectionRatio"]:
 			print("Got a position!")
 			predictedPos = Position(
-				entryIndex=currentKlineIndex + 1, 	# +1 because
+				entryIndex=currentKlineIndex + 1, 	# +1 because it's a prediction for the future kline
 				exitIndex=None, 					# we don't know
 				entryPrice=currentKlines[currentKlineIndex + 1]["open"],
 				direction=direction,
@@ -169,7 +169,7 @@ class Knn(DecisionMaker):
 				profit=None
 			)
 		else:
-			print("Ratio was shit")
+			print(f"Ratio was shit: {ratio}")
 			predictedPos = None
 
 		return {"predicted": predictedPos, "considered": consideredPos}
@@ -281,66 +281,82 @@ class Knn(DecisionMaker):
 	def simulatePosition(self, nn):
 		"""
 		Simulates the position of the given nearest neighbour.
-		It places a long position on the close price of index of nn.
-		If the position is "good" (it's not inconclusive) and it makes profit, this will return a long position.
-		But if it's conclusive, and it doesn't make profit it returns a short position.
-		If the position is inconclusive, it will return None.
+		Places a long and a short position at the given nn index.
+		If the tp of either positions gets hit, it returns the position.
+		If the sl of a position gets hit, it disables that position.
+		If both the sl get hit, it returns None.
+		If neither sl and tp get hit, it returns None.
+		If both sl and tp get hit in the same position, it returns None.
 
 		:param nn:
-		:return:
+		:return:	None or the position
 		"""
 
 		posOpenIndex: int = nn["index"]
 		entryPrice = self.trainKlines[posOpenIndex]["close"]
 
-		# we assume that we are making a long position (doesn't matter anyway)
-		tp = entryPrice + (entryPrice / 100) * self.positionParams["tp"]
-		sl = entryPrice - (entryPrice / 100) * self.positionParams["sl"]
+		# long position params
+		longTp = entryPrice + (entryPrice / 100) * self.positionParams["tp"]
+		longSl = entryPrice - (entryPrice / 100) * self.positionParams["sl"]
+		longSlTriggered = False
+
+		# short position params
+		shortTp = entryPrice - (entryPrice / 100) * self.positionParams["tp"]
+		shortSl = entryPrice + (entryPrice / 100) * self.positionParams["sl"]
+		shortSlTriggered = False
 
 		# loop through every kline after the position opening and check if it hits the sl or tp
-		for posCurrIndex in range(1, self.positionParams["maxLength"]):
-			klinesIndex = posCurrIndex + posOpenIndex
+		# DOUBLECHECK should the for loop start with 1?
+		for posCurrIndex in range(self.positionParams["maxLength"]):
+			klineIndex = posCurrIndex + posOpenIndex
 
 			try:
-				currentLow = self.trainKlines[klinesIndex]["low"]
-				currentHigh = self.trainKlines[klinesIndex]["high"]
+				currentLow = self.trainKlines[klineIndex]["low"]
+				currentHigh = self.trainKlines[klineIndex]["high"]
 			except IndexError:
-				# reached the end of the chart
+				# reached the end of the training klines
+				# DOUBLECHECK is it true that its just because of the end of the chart?
 				return None
 
-			# if both high and low go over the tp/sl, then it's inconclusive
-			if currentLow < sl and currentHigh > tp:
-				print("tp and sl bot got hit")
+			# check stopLoss hits
+			if currentLow < longSl:
+				longSlTriggered = True
+
+			if currentHigh > shortSl:
+				shortSlTriggered = True
+
+			# check if both sl hit
+			if longSlTriggered and shortSlTriggered:
+				# this handles also big candles that go from tp to sl
+				print("Both sl got hit!")
 				return None
 
-			# The position should have been short
-			# FIXME THIS IS SHIT. IF SL IS 0.1 AND TP IS 0.3 THEN ITS NOT THAT EASY
-			# FIXME i guess i should only count the tp both up and down
-			if currentLow < sl:
+			# return short position
+			if currentLow < shortTp and not shortSlTriggered:
 				return Position(
 					entryIndex=posOpenIndex,
-					exitIndex=klinesIndex,
+					exitIndex=klineIndex,
 					direction="short",
 					entryPrice=entryPrice,
-					exitPrice=sl,
+					exitPrice=shortTp,
 					profit=None,
-					sl=self.positionParams["tp"],  # yes, they are not inverted
-					tp=self.positionParams["sl"]
+					sl=self.positionParams["sl"],
+					tp=self.positionParams["tp"]
 				)
 
-			# The position is correct (long)
-			if currentHigh > tp:
+			# return long position
+			if currentHigh > longTp and not longSlTriggered:
 				return Position(
 					entryIndex=posOpenIndex,
-					exitIndex=klinesIndex,
+					exitIndex=klineIndex,
 					direction="long",
 					entryPrice=entryPrice,
-					exitPrice=tp,
+					exitPrice=longTp,
 					profit=None,
 					sl=self.positionParams["sl"],
 					tp=self.positionParams["tp"]
 				)
 
 		# if nothing happens, the position is too long (inconclusive)
-		# print(f"position is too long")
+		print(f"position is too long")
 		return None
