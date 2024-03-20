@@ -127,3 +127,33 @@ The details of the knn model
 
 `sameDirectionRatio`: at least how many positions must point in the same direction
 for it to be considered. (eg. long, long, short is 66% same direction)
+
+## Backtesting
+
+Given the backtest klines and a decision maker, this function will create a backtest
+and return its results.
+
+The results will be in the following format:
+```json
+{
+  "longPositions": [],
+  "shortPositions": [],
+  "totPositions": [],
+  "winningPositions": [],
+  "losingPositions": [],
+  "duration": 0,
+  "profitFactor": 0,
+  "maxDrawdown": 0,
+  "grossProfit": 0,
+  "grossLoss": 0,
+  "commission": 0,
+  "netProfit": 0,
+  "percentProfitable": 0
+}
+```
+
+in addition to this, a chart will be drawn with all the klines and the taken positions.
+The backtester will have also a few parameters:
+- `maxOpenPositions`: The maximum number of allowed open position
+- `commissionFee`: The commission taken by the broker on each trade (in percents)
+- `positionSize`: How many € we gamble for each position

@@ -5,19 +5,8 @@ The main body of the bot, where everything will be run from
 import matplotlib.pyplot as plt
 
 from decisionMaker import Knn
-from dataGetter import getForexDataSwissSite, getCryptoDataBinance
-from tradingClasses import Chart
-
-
-def backtest(data, decisionMaker):
-    """
-    Runs a backtest on given data using given decisionMaker
-
-    Returns a dictionary with all the results of the backtest
-
-    :return:
-    """
-    pass
+from dataGetter import getCryptoDataBinance
+from tradingClasses import Chart, Backtest
 
 
 def plotChart(chart, extraSeries=(), dataPoints=((),)):
@@ -57,24 +46,12 @@ def plotChart(chart, extraSeries=(), dataPoints=((),)):
 
 if __name__ == '__main__':
     # get klines
-    # klines = getForexDataSwissSite()
     klines = getCryptoDataBinance()
-
-    # THIS HAS OVER 500000 KLINES, DO *NOT* ATTEMPT TO PLOT
-    chart = Chart(klines)
-    # THIS HAS OVER 500000 KLINES, DO *NOT* ATTEMPT TO PLOT
-
-    # split it into training and simulation data
     trainKlines = klines[:500000]
-    simKlines = klines[500000:]
+    simKlines = klines[500000:500060]
 
     brain = Knn(trainKlines)
+    backtest = Backtest(simKlines, brain, maxOpenPositions=1)
 
-    predictedPositions = []
-    for i in range(30, 70):
-        positions = brain.getPosition(simKlines, i)
-        predictedPositions.append(positions["predicted"])
-
-    chart = Chart(simKlines, positions=predictedPositions)
-    plotChart(chart)
-    # print(chart)
+    print(backtest)
+    backtest.plot()

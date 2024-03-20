@@ -15,3 +15,14 @@ knnConfig = {
     "threshold": 0.05,
     "sameDirectionRatio": 1
 }
+
+
+# check that every parameter makes sense
+if knnConfig["sameDirectionRatio"] < 0.5:
+    # only the highest ratio gets compared, so it will always be >= 0.5
+    raise Exception("The same direction ratio must be >= 0.5!")
+
+if knnConfig["threshold"] <= 0:
+    raise Exception("The threshold must be greater than 0!")
+
+# TODO add boundaries for tp, sl and everything else too

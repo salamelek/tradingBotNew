@@ -165,8 +165,7 @@ class Knn(DecisionMaker):
 				direction=direction,
 				sl=positionSimConfig["sl"],
 				tp=positionSimConfig["tp"],
-				exitPrice=None,
-				profit=None
+				exitPrice=None
 			)
 		else:
 			print(f"Ratio was shit: {ratio}")
@@ -339,7 +338,6 @@ class Knn(DecisionMaker):
 					direction="short",
 					entryPrice=entryPrice,
 					exitPrice=shortTp,
-					profit=None,
 					sl=self.positionParams["sl"],
 					tp=self.positionParams["tp"]
 				)
@@ -352,11 +350,11 @@ class Knn(DecisionMaker):
 					direction="long",
 					entryPrice=entryPrice,
 					exitPrice=longTp,
-					profit=None,
 					sl=self.positionParams["sl"],
 					tp=self.positionParams["tp"]
 				)
 
 		# if nothing happens, the position is too long (inconclusive)
+		# FIXME why is this printing so many times??
 		print(f"position is too long")
 		return None
