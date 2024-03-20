@@ -5,7 +5,7 @@ The main body of the bot, where everything will be run from
 import matplotlib.pyplot as plt
 
 from decisionMaker import Knn
-from dataGetter import getForexDataSwissSite
+from dataGetter import getForexDataSwissSite, getCryptoDataBinance
 from tradingClasses import Chart
 
 
@@ -57,18 +57,25 @@ def plotChart(chart, extraSeries=(), dataPoints=((),)):
 
 if __name__ == '__main__':
     # get klines
-    klines = getForexDataSwissSite()
+    # klines = getForexDataSwissSite()
+    klines = getCryptoDataBinance()
+
+    # THIS HAS OVER 500000 KLINES, DO *NOT* ATTEMPT TO PLOT
+    chart = Chart(klines)
+    # THIS HAS OVER 500000 KLINES, DO *NOT* ATTEMPT TO PLOT
 
     # split it into training and simulation data
-    trainKlines = klines[:34500]
-    simKlines = klines[34500:]
+    trainKlines = klines[:500000]
+    simKlines = klines[500000:]
 
     brain = Knn(trainKlines)
 
     predictedPositions = []
-    for i in range(440):
+    for i in range(1000):
         positions = brain.getPosition(simKlines, i)
         predictedPositions.append(positions["predicted"])
+        if i % 10 == 0:
+            print(f"{i}/1000")
 
     chart = Chart(simKlines, positions=predictedPositions)
     plotChart(chart)

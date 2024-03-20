@@ -1,0 +1,12 @@
+open_time				Kline Open time in unix time format
+open					Open Price
+high					High Price
+low						Low Price
+close					Close Price
+volume					Volume
+close_time				Kline Close time in unix time format
+quote_volume			Quote Asset Volume
+count					Number of Trades
+taker_buy_volume		Taker buy base asset volume during this period
+taker_buy_quote_volume	Taker buy quote asset volume during this period
+ignore					Ignore

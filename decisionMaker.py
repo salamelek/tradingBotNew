@@ -112,6 +112,7 @@ class Knn(DecisionMaker):
 
 		if not knn:
 			# the knn list is empty
+			# (probably because the dp cant be calculated yet)
 			print("the knn list is empty")
 			return {"predicted": None, "considered": None}
 
@@ -122,7 +123,7 @@ class Knn(DecisionMaker):
 
 		if meanDist > self.knnParams["threshold"]:
 			# nn was not acceptable
-			print("nn was not acceptable")
+			print(f"nn was not acceptable ({meanDist:.5f}/{knnConfig['threshold']})")
 			return {"predicted": None, "considered": None}
 
 		# for each nn simulate the position
@@ -313,6 +314,8 @@ class Knn(DecisionMaker):
 				return None
 
 			# The position should have been short
+			# FIXME THIS IS SHIT. IF SL IS 0.1 AND TP IS 0.3 THEN ITS NOT THAT EASY
+			# FIXME i guess i should only count the tp both up and down
 			if currentLow < sl:
 				return Position(
 					entryIndex=posOpenIndex,
