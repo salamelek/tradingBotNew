@@ -208,6 +208,8 @@ class Knn(DecisionMaker):
 				direction=direction,
 				sl=positionSimConfig["sl"],
 				tp=positionSimConfig["tp"],
+				slPrice=None,
+				tpPrice=None,
 				exitPrice=None
 			)
 		else:
@@ -383,7 +385,9 @@ class Knn(DecisionMaker):
 					entryPrice=entryPrice,
 					exitPrice=shortTp,
 					sl=self.positionParams["sl"],
-					tp=self.positionParams["tp"]
+					tp=self.positionParams["tp"],
+					slPrice=None,
+					tpPrice=None
 				)
 
 			# return long position
@@ -395,7 +399,9 @@ class Knn(DecisionMaker):
 					entryPrice=entryPrice,
 					exitPrice=longTp,
 					sl=self.positionParams["sl"],
-					tp=self.positionParams["tp"]
+					tp=self.positionParams["tp"],
+					slPrice=None,
+					tpPrice=None
 				)
 
 		# if nothing happens, the position is too long (inconclusive)

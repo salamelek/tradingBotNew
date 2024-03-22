@@ -91,13 +91,15 @@ class Indicator:
 
 
 class Position:
-    def __init__(self, entryIndex, exitIndex, entryPrice, direction, sl, tp, exitPrice):
+    def __init__(self, entryIndex, exitIndex, entryPrice, direction, sl, tp, slPrice, tpPrice, exitPrice):
         self.entryIndex = entryIndex
         self.exitIndex = exitIndex
         self.entryPrice = entryPrice
         self.direction = direction
         self.sl = sl
         self.tp = tp
+        self.slPrice = slPrice
+        self.tpPrice = tpPrice
         self.exitPrice = exitPrice
 
     def __str__(self):
@@ -216,67 +218,60 @@ class Backtest:
             "percentProfitable": 0
         }
 
-        openPositions = 0
+        openPositions = []
 
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
             # if maxNumOfPositions is open, skip kline
-            if openPositions >= self.maxOpenPositions:
-                # FIXME open positions count
-                continue
+            if len(openPositions) >= self.maxOpenPositions:
+                print(f"Already in {self.maxOpenPositions} position(s)!")
+                predictedPos = None
 
-            # get predicted position
-            predictedPos = self.decisionMaker.getPosition(self.klines, klineIndex)["predicted"]
+            else:
+                # get predicted position
+                predictedPos = self.decisionMaker.getPosition(self.klines, klineIndex)["predicted"]
 
             # skip None positions
-            if not predictedPos:
-                continue
+            if predictedPos is not None:
+                # append the position to the correct lists
+                openPositions.append(predictedPos)
 
-            # append the position to the correct lists
-            openPositions += 1
+                stats["totPositions"].append(predictedPos)
 
-            stats["totPositions"].append(predictedPos)
+                if predictedPos.direction == 1:
+                    stats["longPositions"].append(predictedPos)
 
-            if predictedPos.direction == 1:
-                stats["longPositions"].append(predictedPos)
+                if predictedPos.direction == -1:
+                    stats["shortPositions"].append(predictedPos)
 
-            if predictedPos.direction == -1:
-                stats["shortPositions"].append(predictedPos)
+                # calculate tp and sl
+                predictedPos.tpPrice = predictedPos.entryPrice + (predictedPos.entryPrice / 100) * predictedPos.tp * predictedPos.direction
+                predictedPos.slPrice = predictedPos.entryPrice - (predictedPos.entryPrice / 100) * predictedPos.sl * predictedPos.direction
 
-            # calculate tp and sl
-            posTp = predictedPos.entryPrice + (predictedPos.entryPrice / 100) * predictedPos.tp * predictedPos.direction
-            posSl = predictedPos.entryPrice - (predictedPos.entryPrice / 100) * predictedPos.sl * predictedPos.direction
-
-            # simulate position
-            for simKlineIndex in range(klineIndex, len(self.klines)):
-                currSimKline = self.klines[simKlineIndex]
-
+            # simulate positions
+            for openPos in openPositions:
                 # check sl
-                if (predictedPos.direction == 1 and currSimKline["low"] < posSl) or (predictedPos.direction == -1 and currSimKline["high"] > posSl):
-                    predictedPos.exitIndex = simKlineIndex
-                    predictedPos.exitPrice = posSl
-                    stats["losingPositions"].append(predictedPos)
+                if (openPos.direction == 1 and self.klines[klineIndex]["low"] < openPos.slPrice) or (openPos.direction == -1 and self.klines[klineIndex]["high"] > openPos.slPrice):
+                    openPos.exitIndex = klineIndex
+                    openPos.exitPrice = openPos.slPrice
+                    stats["losingPositions"].append(openPos)
 
-                    stats["grossLoss"] -= (self.positionSize * predictedPos.sl) / 100
-                    stats["netProfit"] -= (self.positionSize * predictedPos.sl) / 100
+                    stats["grossLoss"] -= (self.positionSize * openPos.sl) / 100
+                    stats["netProfit"] -= (self.positionSize * openPos.sl) / 100
 
-                    openPositions -= 1
-                    break
+                    openPositions.remove(openPos)
 
                 # check tp
-                if (predictedPos.direction == 1 and currSimKline["high"] > posTp) or (predictedPos.direction == -1 and currSimKline["low"] < posTp):
-                    predictedPos.exitIndex = simKlineIndex
-                    predictedPos.exitPrice = posTp
-                    stats["winningPositions"].append(predictedPos)
+                if (openPos.direction == 1 and self.klines[klineIndex]["high"] > openPos.tpPrice) or (openPos.direction == -1 and self.klines[klineIndex]["low"] < openPos.tpPrice):
+                    openPos.exitIndex = klineIndex
+                    openPos.exitPrice = openPos.tpPrice
+                    stats["winningPositions"].append(openPos)
 
-                    stats["grossProfit"] += (self.positionSize * predictedPos.tp) / 100
-                    stats["netProfit"] += (self.positionSize * predictedPos.tp) / 100
+                    stats["grossProfit"] += (self.positionSize * openPos.tp) / 100
+                    stats["netProfit"] += (self.positionSize * openPos.tp) / 100
 
-                    openPositions -= 1
-                    break
-
+                    openPositions.remove(openPos)
 
             # update stats
-
 
         return stats
