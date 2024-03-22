@@ -3,7 +3,7 @@ The "brains" of the bot, where the decision-making will be made
 Every decisionMaker is a child class od DecisionMaker and must implement the abstract methods.
 """
 
-import math
+import numpy as np
 from abc import abstractmethod
 
 from config import positionSimConfig, knnConfig
@@ -62,7 +62,47 @@ def euclideanDistance(a, b):
 	for i in range(len(a)):
 		dist += (a[i] - b[i]) ** 2
 
-	return math.sqrt(dist)
+	return np.sqrt(dist)
+
+
+def lorentzianDistance(a, b):
+	"""
+	Returns the Lorentzian of the two given points
+
+	FIXME returns negative distances :')
+
+	:param a:
+	:param b:
+	:return:
+	"""
+
+	if len(a) != len(b):
+		raise Exception("The two points must have the same length")
+
+	l = len(a)
+
+	lorSum = 0
+	for i in range(l):
+		lorSum += (a[i] - b[i]) ** 2 - (a[-1] - b[-1]) ** 2
+
+	return np.sqrt(lorSum)
+
+
+def lorentzianDistStolen(a, b):
+	"""
+	Stolen shamelessly from
+	https://github.com/energyinpython/distance-metrics-for-mcda/blob/main/distance_metrics_mcda/distance_metrics.py
+
+	:param a:
+	:param b:
+	:return:
+	"""
+
+	A = np.array(a)
+	B = np.array(b)
+
+	tmp = np.sum(np.log(1 + np.abs(A - B)))
+	return tmp
 
 
 class Knn(DecisionMaker):
@@ -132,6 +172,9 @@ class Knn(DecisionMaker):
 			pos = self.simulatePosition(nn)
 			if pos is not None:
 				consideredPos.append(pos)
+			else:
+				# position is None, so we return None
+				return {"predicted": None, "considered": None}
 
 		# check the general direction of the positions and if it's good enough
 		longPosCount = 0
@@ -256,6 +299,7 @@ class Knn(DecisionMaker):
 
 			try:
 				distance = euclideanDistance(trainDp, dataPoint)
+				# distance = lorentzianDistStolen(trainDp, dataPoint)
 			except TypeError:
 				# the dp is not calculated yet
 				continue
