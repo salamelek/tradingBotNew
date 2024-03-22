@@ -181,10 +181,10 @@ class Knn(DecisionMaker):
 		shortPosCount = 0
 
 		for pos in consideredPos:
-			if pos.direction == "long":
+			if pos.direction == 1:
 				longPosCount += 1
 
-			elif pos.direction == "short":
+			elif pos.direction == -1:
 				shortPosCount += 1
 
 			else:
@@ -192,10 +192,10 @@ class Knn(DecisionMaker):
 
 		if longPosCount > shortPosCount:
 			ratio = longPosCount / (longPosCount + shortPosCount)
-			direction = "long"
+			direction = 1
 		elif longPosCount < shortPosCount:
 			ratio = shortPosCount / (longPosCount + shortPosCount)
-			direction = "short"
+			direction = -1
 		else:
 			return {"predicted": None, "considered": consideredPos}
 
@@ -379,7 +379,7 @@ class Knn(DecisionMaker):
 				return Position(
 					entryIndex=posOpenIndex,
 					exitIndex=klineIndex,
-					direction="short",
+					direction=-1,
 					entryPrice=entryPrice,
 					exitPrice=shortTp,
 					sl=self.positionParams["sl"],
@@ -391,7 +391,7 @@ class Knn(DecisionMaker):
 				return Position(
 					entryIndex=posOpenIndex,
 					exitIndex=klineIndex,
-					direction="long",
+					direction=1,
 					entryPrice=entryPrice,
 					exitPrice=longTp,
 					sl=self.positionParams["sl"],
