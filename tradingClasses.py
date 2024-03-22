@@ -286,4 +286,6 @@ class Backtest:
         except ZeroDivisionError:
             stats["profitFactor"] = 99
 
+        stats["maxDrawdown"] = maxDrawdown
+
         return stats
