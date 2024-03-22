@@ -3,6 +3,7 @@ The main body of the bot, where everything will be run from
 """
 
 import matplotlib.pyplot as plt
+import pickle
 
 from decisionMaker import Knn
 from dataGetter import getCryptoDataBinance
@@ -48,10 +49,13 @@ if __name__ == '__main__':
     # get klines
     klines = getCryptoDataBinance()
     trainKlines = klines[:500000]
-    simKlines = klines[500030:500300]
+    simKlines = klines[500000:501000]
 
     brain = Knn(trainKlines)
     backtest = Backtest(simKlines, brain, maxOpenPositions=1)
+
+    with open("backtest.pickle", "wb") as pickleFile:
+        pickle.dump(backtest, pickleFile)
 
     print(backtest)
     backtest.plot()

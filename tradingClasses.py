@@ -219,6 +219,8 @@ class Backtest:
         }
 
         openPositions = []
+        maxDrawdown = 0
+        drawdown = 0
 
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
@@ -256,8 +258,10 @@ class Backtest:
                     openPos.exitPrice = openPos.slPrice
                     stats["losingPositions"].append(openPos)
 
-                    stats["grossLoss"] -= (self.positionSize * openPos.sl) / 100
-                    stats["netProfit"] -= (self.positionSize * openPos.sl) / 100
+                    profit = (self.positionSize * openPos.sl) / -100
+                    stats["grossLoss"] += profit
+                    stats["netProfit"] += profit
+                    drawdown += profit
 
                     openPositions.remove(openPos)
 
@@ -267,11 +271,19 @@ class Backtest:
                     openPos.exitPrice = openPos.tpPrice
                     stats["winningPositions"].append(openPos)
 
-                    stats["grossProfit"] += (self.positionSize * openPos.tp) / 100
-                    stats["netProfit"] += (self.positionSize * openPos.tp) / 100
+                    profit = (self.positionSize * openPos.tp) / 100
+                    stats["grossProfit"] += profit
+                    stats["netProfit"] += profit
+                    if drawdown < maxDrawdown:
+                        maxDrawdown = drawdown
+                        drawdown = 0
 
                     openPositions.remove(openPos)
 
-            # update stats
+        # update stats
+        try:
+            stats["profitFactor"] = abs(stats["grossProfit"] / stats["grossLoss"])
+        except ZeroDivisionError:
+            stats["profitFactor"] = 99
 
         return stats
