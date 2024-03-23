@@ -226,7 +226,7 @@ class Backtest:
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
             # print progressbar
-            loadingBar(klineIndex, len(self.klines), "Backtest progress:", f"| got {len(stats['totPositions'])} positions")
+            loadingBar(klineIndex, len(self.klines), "Backtest:", f"| {len(stats['totPositions'])} positions")
 
             # if maxNumOfPositions is open, skip kline
             if len(openPositions) >= self.maxOpenPositions:
@@ -288,7 +288,7 @@ class Backtest:
         try:
             stats["profitFactor"] = abs(stats["grossProfit"] / stats["grossLoss"])
         except ZeroDivisionError:
-            stats["profitFactor"] = 99
+            stats["profitFactor"] = 99.99
 
         stats["maxDrawdown"] = maxDrawdown
 

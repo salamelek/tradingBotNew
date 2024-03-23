@@ -7,7 +7,7 @@ import pickle
 
 from decisionMaker import Knn
 from dataGetter import getCryptoDataBinance
-from tradingClasses import Chart, Backtest
+from tradingClasses import Backtest
 
 
 def plotChart(chart, extraSeries=(), dataPoints=((),)):
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # get klines
     klines = getCryptoDataBinance()
     trainKlines = klines[:500000]
-    simKlines = klines[500000:500060]
+    simKlines = klines[500030:500060]
 
     brain = Knn(trainKlines)
     backtest = Backtest(simKlines, brain, maxOpenPositions=1)

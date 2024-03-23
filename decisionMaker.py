@@ -65,29 +65,6 @@ def euclideanDistance(a, b):
 	return np.sqrt(dist)
 
 
-def lorentzianDistance(a, b):
-	"""
-	Returns the Lorentzian of the two given points
-
-	FIXME returns negative distances :')
-
-	:param a:
-	:param b:
-	:return:
-	"""
-
-	if len(a) != len(b):
-		raise Exception("The two points must have the same length")
-
-	l = len(a)
-
-	lorSum = 0
-	for i in range(l):
-		lorSum += (a[i] - b[i]) ** 2 - (a[-1] - b[-1]) ** 2
-
-	return np.sqrt(lorSum)
-
-
 def lorentzianDistStolen(a, b):
 	"""
 	Stolen shamelessly from
@@ -132,7 +109,6 @@ class Knn(DecisionMaker):
 		self.trainDataPoints = self.extractDataPoints(self.trainKlines)
 
 		self.knnParams = knnParams
-
 		self.positionParams = positionParams
 
 	def getPosition(self, currentKlines, currentKlineIndex):
@@ -293,6 +269,8 @@ class Knn(DecisionMaker):
 		:return:
 		"""
 
+		# TODO use a grid to speed up search
+
 		knn = []
 
 		# compare distances with each dataPoint in the training dataset
@@ -351,7 +329,6 @@ class Knn(DecisionMaker):
 		shortSlTriggered = False
 
 		# loop through every kline after the position opening and check if it hits the sl or tp
-		# DOUBLECHECK should the for loop start with 1?
 		for posCurrIndex in range(self.positionParams["maxLength"]):
 			klineIndex = posCurrIndex + posOpenIndex
 
@@ -360,7 +337,6 @@ class Knn(DecisionMaker):
 				currentHigh = self.trainKlines[klineIndex]["high"]
 			except IndexError:
 				# reached the end of the training klines
-				# DOUBLECHECK is it true that its just because of the end of the chart?
 				return None
 
 			# check stopLoss hits
