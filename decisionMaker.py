@@ -153,7 +153,7 @@ class Knn(DecisionMaker):
 		if not knn:
 			# the knn list is empty
 			# (probably because the dp cant be calculated yet)
-			print("the knn list is empty")
+			# print("the knn list is empty")
 			return {"predicted": None, "considered": None}
 
 		# check if the nn are acceptable
@@ -163,7 +163,7 @@ class Knn(DecisionMaker):
 
 		if meanDist > self.knnParams["threshold"]:
 			# nn was not acceptable
-			print(f"nn was not acceptable ({meanDist:.5f}/{knnConfig['threshold']})")
+			# print(f"nn was not acceptable ({meanDist:.5f}/{knnConfig['threshold']})")
 			return {"predicted": None, "considered": None}
 
 		# for each nn simulate the position
@@ -200,7 +200,7 @@ class Knn(DecisionMaker):
 			return {"predicted": None, "considered": consideredPos}
 
 		if ratio >= knnConfig["sameDirectionRatio"]:
-			print("Got a position!")
+			# print("Got a position!")
 			predictedPos = Position(
 				entryIndex=currentKlineIndex + 1, 	# +1 because it's a prediction for the future kline
 				exitIndex=None, 					# we don't know
@@ -213,7 +213,7 @@ class Knn(DecisionMaker):
 				exitPrice=None
 			)
 		else:
-			print(f"Ratio was shit: {ratio}")
+			# print(f"Ratio was shit: {ratio}")
 			predictedPos = None
 
 		return {"predicted": predictedPos, "considered": consideredPos}
@@ -373,7 +373,7 @@ class Knn(DecisionMaker):
 			# check if both sl hit
 			if longSlTriggered and shortSlTriggered:
 				# this handles also big candles that go from tp to sl
-				print("Both sl got hit!")
+				# print("Both sl got hit!")
 				return None
 
 			# return short position
@@ -405,6 +405,5 @@ class Knn(DecisionMaker):
 				)
 
 		# if nothing happens, the position is too long (inconclusive)
-		# FIXME why is this printing so many times??
-		print(f"position is too long")
+		# print(f"position is too long")
 		return None

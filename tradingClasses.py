@@ -7,6 +7,7 @@ from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 
 from config import positionSimConfig
+from loadingBar import loadingBar
 
 
 class Chart:
@@ -224,9 +225,12 @@ class Backtest:
 
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
+            # print progressbar
+            loadingBar(klineIndex, len(self.klines), "Backtest progress:", f"| got {len(stats['totPositions'])} positions")
+
             # if maxNumOfPositions is open, skip kline
             if len(openPositions) >= self.maxOpenPositions:
-                print(f"Already in {self.maxOpenPositions} position(s)!")
+                # print(f"Already in {self.maxOpenPositions} position(s)!")
                 predictedPos = None
 
             else:
@@ -263,7 +267,11 @@ class Backtest:
                     stats["netProfit"] += profit
                     drawdown += profit
 
-                    openPositions.remove(openPos)
+                    try:
+                        openPositions.remove(openPos)
+                    except ValueError:
+                        print("No such open position!")
+                        print(openPositions)
 
                 # check tp
                 if (openPos.direction == 1 and self.klines[klineIndex]["high"] > openPos.tpPrice) or (openPos.direction == -1 and self.klines[klineIndex]["low"] < openPos.tpPrice):
@@ -278,7 +286,11 @@ class Backtest:
                         maxDrawdown = drawdown
                         drawdown = 0
 
-                    openPositions.remove(openPos)
+                    try:
+                        openPositions.remove(openPos)
+                    except ValueError:
+                        print("No such open position!")
+                        print(openPositions)
 
         # update stats
         try:
