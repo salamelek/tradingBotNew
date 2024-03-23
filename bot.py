@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # get klines
     klines = getCryptoDataBinance()
     trainKlines = klines[:500000]
-    simKlines = klines[500000:501000]
+    simKlines = klines[500000:500060]
 
     brain = Knn(trainKlines)
     backtest = Backtest(simKlines, brain, maxOpenPositions=1)

@@ -267,14 +267,10 @@ class Backtest:
                     stats["netProfit"] += profit
                     drawdown += profit
 
-                    try:
-                        openPositions.remove(openPos)
-                    except ValueError:
-                        print("No such open position!")
-                        print(openPositions)
+                    openPositions.remove(openPos)
 
                 # check tp
-                if (openPos.direction == 1 and self.klines[klineIndex]["high"] > openPos.tpPrice) or (openPos.direction == -1 and self.klines[klineIndex]["low"] < openPos.tpPrice):
+                elif (openPos.direction == 1 and self.klines[klineIndex]["high"] > openPos.tpPrice) or (openPos.direction == -1 and self.klines[klineIndex]["low"] < openPos.tpPrice):
                     openPos.exitIndex = klineIndex
                     openPos.exitPrice = openPos.tpPrice
                     stats["winningPositions"].append(openPos)
@@ -286,11 +282,7 @@ class Backtest:
                         maxDrawdown = drawdown
                         drawdown = 0
 
-                    try:
-                        openPositions.remove(openPos)
-                    except ValueError:
-                        print("No such open position!")
-                        print(openPositions)
+                    openPositions.remove(openPos)
 
         # update stats
         try:
