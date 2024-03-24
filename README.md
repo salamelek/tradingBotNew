@@ -157,3 +157,9 @@ The backtester will have also a few parameters:
 - `maxOpenPositions`: The maximum number of allowed open position
 - `commissionFee`: The commission taken by the broker on each trade (in percents)
 - `positionSize`: How many € we gamble for each position
+
+## Splitting the space into a grid
+
+The space will be split based on the knn threshold distance.
+If the grid squares have sides with the length of the max distance threshold,
+the program has to only check the square in which is the datapoint and the adjacent ones.

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataGetter import getCryptoDataBinance
 import time
-from loadingBar import loadingBar
+from config import knnConfig
 
 
 def euclideanDistance(a, b):
@@ -34,41 +34,6 @@ def extractDataPoints(klines):
     return dataPoints
 
 
-def getKnnOld(dataPoint, dataPoints, k=3):
-    """
-    about 15 seconds for 10 klines
-
-    :param dataPoint:
-    :param dataPoints:
-    :param k:
-    :return:
-    """
-
-    knn = []
-
-    for index in range(len(dataPoints)):
-        trainDp = dataPoints[index]
-
-        distance = euclideanDistance(trainDp, dataPoint)
-
-        neighbour = {"distance": distance, "index": index}
-
-        # if the list is still empty, just append the neighbour
-        if len(knn) < k:
-            knn.append(neighbour)
-            continue
-
-        # sort the neighbours (for easier access)
-        # lower distance first, higher at the end
-        knn = sorted(knn, key=lambda x: x["distance"])
-
-        # replace the worst neighbour with the better one
-        if distance < knn[-1]["distance"]:
-            knn[-1] = neighbour
-
-    return knn
-
-
 def plotPoints():
     print("Plotting points...")
 
@@ -87,7 +52,7 @@ def plotPoints():
     plt.show()
 
 
-def distributeDp(dataPoints, divisions=(1, 10)):
+def distributeDp(dataPoints):
     # price change: [-500, 500]
     # volume:       [0, 15000]
 
@@ -97,7 +62,7 @@ def distributeDp(dataPoints, divisions=(1, 10)):
     distributedDp = {}
 
     for dp in dataPoints:
-        key = (dp[0] // divisions[0], dp[1] // divisions[1])
+        key = (dp[0] // knnConfig["threshold"], dp[1] // knnConfig["threshold"])
 
         try:
             distributedDp[key].append(dp)
@@ -109,9 +74,26 @@ def distributeDp(dataPoints, divisions=(1, 10)):
     return distributedDp
 
 
-def getKnnNew(distributedDp, dataPoint, k=3, divisions=(1, 10)):
+def getEverySquareRecursive(centerSquare):
+    pass
+
+
+def getKnnNew(distributedDp, dataPoint, k=3):
     """
     about 200x faster than old
+
+    (0, 1)
+    (0, 2)
+    (0, 3)
+    (1, 1)
+
+    (1, 2)
+
+    (1, 3)
+    (2, 1)
+(2, 2)
+(2, 3)
+
     :param distributedDp:
     :param dataPoint:
     :param k:
@@ -119,12 +101,23 @@ def getKnnNew(distributedDp, dataPoint, k=3, divisions=(1, 10)):
     :return:
     """
 
-    key = (dp[0] // divisions[0], dp[1] // divisions[1])
+    key = (int(dp[0] // knnConfig["threshold"]), int(dp[1] // knnConfig["threshold"]))
+    closeNn = []
+
+    for k1 in range(key[0] - 1, key[0] + 2):
+        for k2 in range(key[1] - 1, key[1] + 2):
+            try:
+                closeNn += distributedDp[(k1, k2)]
+            except KeyError:
+                pass
+
+    if len(closeNn) < k:
+        return None
+
     knn = []
 
-    for index in range(len(distributedDp[key])):
-        # TODO checks for appropriate k and distance
-        trainDp = distributedDp[key][index]
+    for index in range(len(closeNn)):
+        trainDp = closeNn[index]
 
         distance = euclideanDistance(trainDp, dataPoint)
 
@@ -146,21 +139,12 @@ def getKnnNew(distributedDp, dataPoint, k=3, divisions=(1, 10)):
     return knn
 
 
-
 if __name__ == '__main__':
     klines = getCryptoDataBinance()
     dataPoints = extractDataPoints(klines)
     distributedDp = distributeDp(dataPoints)
 
     # plotPoints()
-
-    start = time.time()
-
-    for i in range(1):
-        dp = dataPoints[i]
-        getKnnOld(dp, dataPoints)
-
-    print(f"Old ended in {time.time() - start} seconds!")
 
     start = time.time()
 
