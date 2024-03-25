@@ -6,3 +6,6 @@ testing.py
 
 # pycache
 __pycache__/
+
+# ignore pickle files
+*.pickle
