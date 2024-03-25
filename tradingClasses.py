@@ -33,7 +33,7 @@ num of klines: {len(self.klines)}
 some other info here maybe :>
 """
 
-    def plot(self, axs):
+    def plot(self, ax):
         bullish = []
         bearish = []
         ranging = []
@@ -57,17 +57,14 @@ some other info here maybe :>
             else:
                 ranging.append(Rectangle(coords, width, self.lineHeight))
 
-        axs[0].add_collection(PatchCollection(bullish, edgecolor="none", facecolor=self.bullishColor))
-        axs[0].add_collection(PatchCollection(bearish, edgecolor="none", facecolor=self.bearishColor))
-        axs[0].add_collection(PatchCollection(ranging, edgecolor="none", facecolor=self.rangingColor))
-
-        # plot volume
-        axs[1].plot(range(len(self.klines)), [kline["volume"] for kline in self.klines])
+        ax.add_collection(PatchCollection(bullish, edgecolor="none", facecolor=self.bullishColor))
+        ax.add_collection(PatchCollection(bearish, edgecolor="none", facecolor=self.bearishColor))
+        ax.add_collection(PatchCollection(ranging, edgecolor="none", facecolor=self.rangingColor))
 
         # plot indicators
         if self.plotIndicators:
             for indicator in self.indicators:
-                indicator.plot(axs)
+                indicator.plot(ax)
 
         # plot positions
         if self.plotPositions and self.positions:
@@ -75,9 +72,9 @@ some other info here maybe :>
                 if position is None:
                     continue
 
-                position.plot(axs)
+                position.plot(ax)
 
-        axs[0].errorbar(0, 1)
+        ax.errorbar(0, 1)
 
 
 class Indicator:
@@ -107,7 +104,7 @@ class Position:
         return (f"{self.direction} position at index {self.entryIndex}\n"
                 f"\tEntry price: {self.entryPrice}\n\tExit price: {self.exitPrice}\n\tExit index: {self.exitIndex}")
 
-    def plot(self, axs):
+    def plot(self, ax):
         positionSquareOpacity = 0.5
 
         if self.exitIndex:
@@ -136,10 +133,10 @@ class Position:
         else:
             raise Exception("Invalid direction")
 
-        axs[0].add_collection(
+        ax.add_collection(
             PatchCollection(greenRects, edgecolor="none", facecolor="green", alpha=positionSquareOpacity)
         )
-        axs[0].add_collection(PatchCollection(redRects, edgecolor="none", facecolor="red", alpha=positionSquareOpacity))
+        ax.add_collection(PatchCollection(redRects, edgecolor="none", facecolor="red", alpha=positionSquareOpacity))
 
 
 class Backtest:
@@ -188,7 +185,9 @@ class Backtest:
         axs = gs.subplots(sharex=True)
 
         # plot chart (with indicators and positions)
-        chart.plot(axs)
+        chart.plot(axs[0])
+
+        axs[1].plot(self.stats["netProfits"])
 
         for ax in axs:
             ax.label_outer()
@@ -216,12 +215,13 @@ class Backtest:
             "grossLoss": 0,
             "commission": 0,
             "netProfit": 0,
-            "percentProfitable": 0
+            "percentProfitable": 0,
+            "netProfits": []
         }
 
         openPositions = []
         maxDrawdown = 0
-        drawdown = 0
+        maxNetProfit = 0
 
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
@@ -234,7 +234,6 @@ class Backtest:
                 predictedPos = None
 
             else:
-                # get predicted position
                 predictedPos = self.decisionMaker.getPosition(self.klines, klineIndex)["predicted"]
 
             # skip None positions
@@ -256,6 +255,9 @@ class Backtest:
 
             # simulate positions
             for openPos in openPositions:
+                if openPos.entryIndex > klineIndex:
+                    continue
+
                 # check sl
                 if (openPos.direction == 1 and self.klines[klineIndex]["low"] < openPos.slPrice) or (openPos.direction == -1 and self.klines[klineIndex]["high"] > openPos.slPrice):
                     openPos.exitIndex = klineIndex
@@ -265,7 +267,6 @@ class Backtest:
                     profit = (self.positionSize * openPos.sl) / -100
                     stats["grossLoss"] += profit
                     stats["netProfit"] += profit
-                    drawdown += profit
 
                     openPositions.remove(openPos)
 
@@ -278,11 +279,19 @@ class Backtest:
                     profit = (self.positionSize * openPos.tp) / 100
                     stats["grossProfit"] += profit
                     stats["netProfit"] += profit
-                    if drawdown < maxDrawdown:
-                        maxDrawdown = drawdown
-                        drawdown = 0
 
                     openPositions.remove(openPos)
+
+            # add info of net profit to plot it
+            stats["netProfits"].append(stats["netProfit"])
+
+            # calculate drawdown
+            if stats["netProfit"] > maxNetProfit:
+                maxNetProfit = stats["netProfit"]
+
+            drawDown = stats["netProfit"] - maxNetProfit
+            if drawDown < maxDrawdown:
+                maxDrawdown = drawDown
 
         # update stats
         try:
