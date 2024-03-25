@@ -53,9 +53,6 @@ def plotPoints():
 
 
 def distributeDp(dataPoints):
-    # price change: [-500, 500]
-    # volume:       [0, 15000]
-
     print("distributing...")
 
     aQuadEvery = 10
@@ -82,26 +79,16 @@ def getKnnNew(distributedDp, dataPoint, k=3):
     """
     about 200x faster than old
 
-    (0, 1)
-    (0, 2)
-    (0, 3)
-    (1, 1)
-
-    (1, 2)
-
-    (1, 3)
-    (2, 1)
-(2, 2)
-(2, 3)
-
     :param distributedDp:
     :param dataPoint:
     :param k:
-    :param divisions:
     :return:
     """
 
-    key = (int(dp[0] // knnConfig["threshold"]), int(dp[1] // knnConfig["threshold"]))
+    key = []
+    for i in range(len(dataPoint)):
+        key.append(int(dataPoint[i] // knnConfig["threshold"]))
+
     closeNn = []
 
     for k1 in range(key[0] - 1, key[0] + 2):
@@ -139,6 +126,40 @@ def getKnnNew(distributedDp, dataPoint, k=3):
     return knn
 
 
+def getKnnOld(dataPoint, dataPoints, k=3):
+    """
+    about 15 seconds for 10 klines
+    :param dataPoint:
+    :param dataPoints:
+    :param k:
+    :return:
+    """
+
+    knn = []
+
+    for index in range(len(dataPoints)):
+        trainDp = dataPoints[index]
+
+        distance = euclideanDistance(trainDp, dataPoint)
+
+        neighbour = {"distance": distance, "index": index}
+
+        # if the list is still empty, just append the neighbour
+        if len(knn) < k:
+            knn.append(neighbour)
+            continue
+
+        # sort the neighbours (for easier access)
+        # lower distance first, higher at the end
+        knn = sorted(knn, key=lambda x: x["distance"])
+
+        # replace the worst neighbour with the better one
+        if distance < knn[-1]["distance"]:
+            knn[-1] = neighbour
+
+    return knn
+
+
 if __name__ == '__main__':
     klines = getCryptoDataBinance()
     dataPoints = extractDataPoints(klines)
@@ -151,6 +172,10 @@ if __name__ == '__main__':
     for i in range(200):
         # loadingBar(i, 100)
         dp = dataPoints[i]
-        getKnnNew(distributedDp, dp)
+        new = getKnnNew(distributedDp, dp)
+        old = getKnnOld(dp, dataPoints)
+        print(f"New: {new[0]['distance']}, {new[2]['distance']}, {new[2]['distance']}")
+        print(f"Old: {old[0]['distance']}, {old[2]['distance']}, {old[2]['distance']}")
+        print()
 
     print(f"New ended in {time.time() - start} seconds!")

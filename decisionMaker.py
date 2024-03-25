@@ -107,6 +107,7 @@ class Knn(DecisionMaker):
 
 		self.trainKlines = trainKlines
 		self.trainDataPoints = self.extractDataPoints(self.trainKlines)
+		self.gridDataPoints = self.placeDpInGrid(self.trainDataPoints)
 
 		self.knnParams = knnParams
 		self.positionParams = positionParams
@@ -124,7 +125,8 @@ class Knn(DecisionMaker):
 		currentDataPoints = self.extractDataPoints(currentKlines)
 
 		# get the knn for the last kline
-		knn = self.getKnn(currentDataPoints[currentKlineIndex])
+		# knn = self.getKnnOld(currentDataPoints[currentKlineIndex])
+		knn = self.getKnnGrid(currentDataPoints[currentKlineIndex])
 
 		if not knn:
 			# the knn list is empty
@@ -259,27 +261,48 @@ class Knn(DecisionMaker):
 
 		return dataPoints
 
-	def getKnn(self, dataPoint):
+	@staticmethod
+	def placeDpInGrid(dataPoints):
 		"""
-		Returns the k nearest neighbours of the given dataPoint
-		The return is a json containing the data:
-		[{"distance": distance, "index": index}, ...]
+		Returns a dict that represents the buckets of data
+		{(quadrant tuple): [points in quadrant]}
 
-		:param dataPoint:
 		:return:
 		"""
 
-		# TODO use a grid to speed up search
+		print("Distributing dataPoints...")
 
+		gridDp = {}
+
+		# place each dataPoint in its quadrant
+		for dataPoint in dataPoints:
+			key = []
+			for i in range(len(dataPoint)):
+				if dataPoint[i] is None:
+					key = ["Not calculated dataPoints"]
+					break
+
+				key.append(int(dataPoint[i] // knnConfig["threshold"]))
+
+			try:
+				gridDp[tuple(key)].append(dataPoint)
+			except KeyError:
+				gridDp[tuple(key)] = [dataPoint]
+
+		print("Done!\n")
+
+		return gridDp
+
+	def knn(self, dataPoints, dataPoint):
 		knn = []
 
 		# compare distances with each dataPoint in the training dataset
-		for index in range(len(self.trainDataPoints)):
-			trainDp = self.trainDataPoints[index]
+		for index in range(len(dataPoints)):
+			trainDp = dataPoints[index]
 
 			try:
 				distance = euclideanDistance(trainDp, dataPoint)
-				# distance = lorentzianDistStolen(trainDp, dataPoint)
+			# distance = lorentzianDistStolen(trainDp, dataPoint)
 			except TypeError:
 				# the dp is not calculated yet
 				continue
@@ -300,6 +323,132 @@ class Knn(DecisionMaker):
 				knn[-1] = neighbour
 
 		return knn
+
+	def getKnnOld(self, dataPoint):
+		"""
+		Returns the k nearest neighbours of the given dataPoint
+		The return is a json containing the data:
+		[{"distance": distance, "index": index}, ...]
+
+		:param dataPoint:
+		:return:
+		"""
+
+		return self.knn(self.trainDataPoints, dataPoint)
+
+	def getKnnGrid(self, dataPoint):
+		"""
+		This too returns k nearest neighbours of the given dataPoint, but it does much faster
+		It uses a grid system to divide data in buckets
+
+		:param dataPoint:
+		:return:
+		"""
+
+		if None in dataPoint:
+			# not yet calculated dataPoints
+			return None
+
+		closeNn = self.getCloseNn(dataPoint)
+
+		if closeNn is None:
+			return None
+
+		if len(closeNn) < self.knnParams["k"]:
+			# no enough nn
+			return None
+
+		return self.knn(closeNn, dataPoint)
+
+	def getCloseNn(self, dataPoint):
+		"""
+		I am ashamed. Don't judge me.
+
+		:param dataPoint:
+		:return:
+		"""
+
+		closeNn = []
+
+		if len(dataPoint) == 1:
+			for offset1 in [-1, 0, 1]:
+				key = (
+					int(dataPoint[0] + offset1),
+				)
+				try:
+					closeNn += self.gridDataPoints[key]
+				except KeyError:
+					# quadrant is empty (doesn't exist)
+					pass
+
+		elif len(dataPoint) == 2:
+			for offset1 in [-1, 0, 1]:
+				for offset2 in [-1, 0, 1]:
+					key = (
+						int(dataPoint[0] + offset1),
+						int(dataPoint[1] + offset2)
+					)
+					try:
+						closeNn += self.gridDataPoints[key]
+					except KeyError:
+						# quadrant is empty (doesn't exist)
+						pass
+
+		elif len(dataPoint) == 3:
+			for offset1 in [-1, 0, 1]:
+				for offset2 in [-1, 0, 1]:
+					for offset3 in [-1, 0, 1]:
+						key = (
+							int(dataPoint[0] + offset1),
+							int(dataPoint[1] + offset2),
+							int(dataPoint[2] + offset3)
+						)
+						try:
+							closeNn += self.gridDataPoints[key]
+						except KeyError:
+							# quadrant is empty (doesn't exist)
+							pass
+
+		elif len(dataPoint) == 4:
+			for offset1 in [-1, 0, 1]:
+				for offset2 in [-1, 0, 1]:
+					for offset3 in [-1, 0, 1]:
+						for offset4 in [-1, 0, 1]:
+							key = (
+								int(dataPoint[0] + offset1),
+								int(dataPoint[1] + offset2),
+								int(dataPoint[2] + offset3),
+								int(dataPoint[3] + offset4)
+							)
+							try:
+								closeNn += self.gridDataPoints[key]
+							except KeyError:
+								# quadrant is empty (doesn't exist)
+								pass
+
+		elif len(dataPoint) == 5:
+			for offset1 in [-1, 0, 1]:
+				for offset2 in [-1, 0, 1]:
+					for offset3 in [-1, 0, 1]:
+						for offset4 in [-1, 0, 1]:
+							for offset5 in [-1, 0, 1]:
+								key = (
+									int(dataPoint[0] + offset1),
+									int(dataPoint[1] + offset2),
+									int(dataPoint[2] + offset3),
+									int(dataPoint[3] + offset4),
+									int(dataPoint[4] + offset5)
+								)
+								try:
+									closeNn += self.gridDataPoints[key]
+								except KeyError:
+									# quadrant is empty (doesn't exist)
+									pass
+
+		else:
+			raise Exception("Invalid dimension number!")
+
+		return closeNn
 
 	def simulatePosition(self, nn):
 		"""
