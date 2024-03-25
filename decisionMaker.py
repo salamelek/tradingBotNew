@@ -40,9 +40,40 @@ def sma(klines, index, interval, klineValue="close"):
 	for j in range(interval):
 		sma += klines[index - j][klineValue]
 
-	sma /= interval
+	return sma / interval
 
-	return sma
+
+def smaTypical(klines, index, interval):
+	if index < interval - 1:
+		return None
+
+	sma = 0
+	for i in range(interval):
+		sma += (klines[index - i]["high"] + klines[index - i]["low"] + klines[index - i]["close"]) / 3
+
+	return sma / interval
+
+
+def adx(klines, index, interval=14):
+	pass
+
+
+def cci(klines, index, interval=20):
+	if index < interval - 1:
+		return None
+
+	typicalPriceTot = 0
+	movingAverage = 0
+	meanDeviation = 0
+	for i in range(interval):
+		typicalPrice = (klines[index - i]["high"] + klines[index - i]["low"] + klines[index - i]["close"]) / 3
+		typicalPriceTot += typicalPrice
+
+	return (typicalPriceTot - movingAverage) / (0.015 * meanDeviation)
+
+
+def rsi(klines, index, interval=14):
+	pass
 
 
 def euclideanDistance(a, b):
@@ -252,6 +283,7 @@ class Knn(DecisionMaker):
 			dp = [
 				kline["close"] - kline["open"], 	# price change
 				smaDiff,  							# sma change
+				# kline["volume"]
 			]
 
 			dataPoints.append(dp)
@@ -364,7 +396,7 @@ class Knn(DecisionMaker):
 		if len(dataPoint) == 1:
 			for offset1 in [-1, 0, 1]:
 				key = (
-					int(dataPoint[0] + offset1),
+					int(dataPoint[0] // knnConfig["threshold"]) + offset1,
 				)
 				try:
 					closeNn += self.gridDataPoints[key]
@@ -376,8 +408,8 @@ class Knn(DecisionMaker):
 			for offset1 in [-1, 0, 1]:
 				for offset2 in [-1, 0, 1]:
 					key = (
-						int(dataPoint[0] + offset1),
-						int(dataPoint[1] + offset2)
+						int(dataPoint[0] // knnConfig["threshold"]) + offset1,
+						int(dataPoint[1] // knnConfig["threshold"]) + offset2
 					)
 					try:
 						closeNn += self.gridDataPoints[key]
@@ -390,9 +422,9 @@ class Knn(DecisionMaker):
 				for offset2 in [-1, 0, 1]:
 					for offset3 in [-1, 0, 1]:
 						key = (
-							int(dataPoint[0] + offset1),
-							int(dataPoint[1] + offset2),
-							int(dataPoint[2] + offset3)
+							int(dataPoint[0] // knnConfig["threshold"]) + offset1,
+							int(dataPoint[1] // knnConfig["threshold"]) + offset2,
+							int(dataPoint[2] // knnConfig["threshold"]) + offset3
 						)
 						try:
 							closeNn += self.gridDataPoints[key]
@@ -406,10 +438,10 @@ class Knn(DecisionMaker):
 					for offset3 in [-1, 0, 1]:
 						for offset4 in [-1, 0, 1]:
 							key = (
-								int(dataPoint[0] + offset1),
-								int(dataPoint[1] + offset2),
-								int(dataPoint[2] + offset3),
-								int(dataPoint[3] + offset4)
+								int(dataPoint[0] // knnConfig["threshold"]) + offset1,
+								int(dataPoint[1] // knnConfig["threshold"]) + offset2,
+								int(dataPoint[2] // knnConfig["threshold"]) + offset3,
+								int(dataPoint[3] // knnConfig["threshold"]) + offset4
 							)
 							try:
 								closeNn += self.gridDataPoints[key]
@@ -424,11 +456,11 @@ class Knn(DecisionMaker):
 						for offset4 in [-1, 0, 1]:
 							for offset5 in [-1, 0, 1]:
 								key = (
-									int(dataPoint[0] + offset1),
-									int(dataPoint[1] + offset2),
-									int(dataPoint[2] + offset3),
-									int(dataPoint[3] + offset4),
-									int(dataPoint[4] + offset5)
+									int(dataPoint[0] // knnConfig["threshold"]) + offset1,
+									int(dataPoint[1] // knnConfig["threshold"]) + offset2,
+									int(dataPoint[2] // knnConfig["threshold"]) + offset3,
+									int(dataPoint[3] // knnConfig["threshold"]) + offset4,
+									int(dataPoint[4] // knnConfig["threshold"]) + offset5
 								)
 								try:
 									closeNn += self.gridDataPoints[key]
