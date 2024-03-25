@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # get klines
     klines = getCryptoDataBinance()
     trainKlines = klines[:500000]
-    simKlines = klines[500000:500100]
+    simKlines = klines[500000:501440]
 
     brain = Knn(trainKlines)
     backtest = Backtest(simKlines, brain, maxOpenPositions=1)
@@ -57,5 +57,5 @@ if __name__ == '__main__':
     with open("backtest.pickle", "wb") as pickleFile:
         pickle.dump(backtest, pickleFile)
 
-    # print(backtest)
-    # backtest.plot()
+    print(backtest)
+    backtest.plot()

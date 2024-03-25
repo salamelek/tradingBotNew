@@ -125,7 +125,6 @@ class Knn(DecisionMaker):
 		currentDataPoints = self.extractDataPoints(currentKlines)
 
 		# get the knn for the last kline
-		# knn = self.getKnnOld(currentDataPoints[currentKlineIndex])
 		knn = self.getKnnGrid(currentDataPoints[currentKlineIndex])
 
 		if not knn:
@@ -135,11 +134,9 @@ class Knn(DecisionMaker):
 			return {"predicted": None, "considered": None}
 
 		# check if the nn are acceptable
-		meanDist = sum([nn["distance"] for nn in knn]) / len(knn)  # mean distance
-		# bestDist = knn[0]["distance"]  # least distance
-		# worstDist = knn[-1]["distance"]  # worst distance
+		worstDist = knn[-1]["distance"]  # worst distance
 
-		if meanDist > self.knnParams["threshold"]:
+		if worstDist > self.knnParams["threshold"]:
 			# nn was not acceptable
 			# print(f"nn was not acceptable ({meanDist:.5f}/{knnConfig['threshold']})")
 			return {"predicted": None, "considered": None}
@@ -267,6 +264,9 @@ class Knn(DecisionMaker):
 		Returns a dict that represents the buckets of data
 		{(quadrant tuple): [points in quadrant]}
 
+		the problem is that once in the quadrant, we do not have the dp index anymore, so we add it as a dict
+		{"dp": dataPoint, "index": dataPointIndex}
+
 		:return:
 		"""
 
@@ -275,7 +275,9 @@ class Knn(DecisionMaker):
 		gridDp = {}
 
 		# place each dataPoint in its quadrant
-		for dataPoint in dataPoints:
+		for dataPointIndex in range(len(dataPoints)):
+			dataPoint = dataPoints[dataPointIndex]
+
 			key = []
 			for i in range(len(dataPoint)):
 				if dataPoint[i] is None:
@@ -285,9 +287,9 @@ class Knn(DecisionMaker):
 				key.append(int(dataPoint[i] // knnConfig["threshold"]))
 
 			try:
-				gridDp[tuple(key)].append(dataPoint)
+				gridDp[tuple(key)].append({"dp": dataPoint, "index": dataPointIndex})
 			except KeyError:
-				gridDp[tuple(key)] = [dataPoint]
+				gridDp[tuple(key)] = [{"dp": dataPoint, "index": dataPointIndex}]
 
 		print("Done!\n")
 
@@ -297,8 +299,9 @@ class Knn(DecisionMaker):
 		knn = []
 
 		# compare distances with each dataPoint in the training dataset
-		for index in range(len(dataPoints)):
-			trainDp = dataPoints[index]
+		for dp in dataPoints:
+			trainDp = dp["dp"]
+			index = dp["index"]
 
 			try:
 				distance = euclideanDistance(trainDp, dataPoint)
@@ -323,18 +326,6 @@ class Knn(DecisionMaker):
 				knn[-1] = neighbour
 
 		return knn
-
-	def getKnnOld(self, dataPoint):
-		"""
-		Returns the k nearest neighbours of the given dataPoint
-		The return is a json containing the data:
-		[{"distance": distance, "index": index}, ...]
-
-		:param dataPoint:
-		:return:
-		"""
-
-		return self.knn(self.trainDataPoints, dataPoint)
 
 	def getKnnGrid(self, dataPoint):
 		"""

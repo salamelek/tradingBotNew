@@ -108,7 +108,7 @@ class Position:
                 f"\tEntry price: {self.entryPrice}\n\tExit price: {self.exitPrice}\n\tExit index: {self.exitIndex}")
 
     def plot(self, axs):
-        positionSquareOpacity = 0.2
+        positionSquareOpacity = 0.5
 
         if self.exitIndex:
             width = self.exitIndex - self.entryIndex + 0.5
@@ -226,7 +226,7 @@ class Backtest:
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
             # print progressbar
-            loadingBar(klineIndex, len(self.klines), "Backtest:", f"| {len(stats['totPositions'])} positions")
+            loadingBar(klineIndex, len(self.klines) - 1, "Backtest:", f"| {len(stats['totPositions'])} positions")
 
             # if maxNumOfPositions is open, skip kline
             if len(openPositions) >= self.maxOpenPositions:
