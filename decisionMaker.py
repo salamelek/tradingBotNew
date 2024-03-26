@@ -6,7 +6,7 @@ Every decisionMaker is a child class od DecisionMaker and must implement the abs
 import numpy as np
 from abc import abstractmethod
 
-from config import positionSimConfig, knnConfig
+from config import positionSimConfig, knnConfig, actualPositionConfig
 from tradingClasses import Position
 
 
@@ -213,8 +213,8 @@ class Knn(DecisionMaker):
 				exitIndex=None, 					# we don't know
 				entryPrice=currentKlines[currentKlineIndex + 1]["open"],
 				direction=direction,
-				sl=positionSimConfig["sl"],
-				tp=positionSimConfig["tp"],
+				sl=actualPositionConfig["sl"],
+				tp=actualPositionConfig["tp"],
 				slPrice=None,
 				tpPrice=None,
 				exitPrice=None
@@ -265,26 +265,32 @@ class Knn(DecisionMaker):
 
 		:return:
 		"""
-
-		smaInterval = 5
 		dataPoints = []
 
 		for i in range(len(klines)):
 			kline = klines[i]
 
-			smaOpen = sma(klines, i, smaInterval, "open")
-			smaClose = sma(klines, i, smaInterval, "close")
+			sma5open = sma(klines, i, 5, "open")
+			sma5close = sma(klines, i, 5, "close")
+			sma15open = sma(klines, i, 15, "open")
+			sma15close = sma(klines, i, 15, "close")
 
 			try:
-				smaDiff = smaClose - smaOpen
+				sma5diff = sma5close - sma5open
 			except TypeError:
 				# the sma is None since there is not enough data
-				smaDiff = None
+				sma5diff = None
+
+			try:
+				sma15diff = sma15close - sma15open
+			except TypeError:
+				# the sma is None since there is not enough data
+				sma15diff = None
 
 			dp = [
 				kline["close"] - kline["open"], 	# price change
-				smaDiff,  							# sma change
-				# kline["volume"]
+				# sma5diff,  							# sma5 change
+				sma15diff							# sma15 change
 			]
 
 			dataPoints.append(dp)

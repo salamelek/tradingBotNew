@@ -226,7 +226,7 @@ class Backtest:
         # for each kline in backtest klines
         for klineIndex in range(len(self.klines)):
             # print progressbar
-            loadingBar(klineIndex, len(self.klines) - 1, "Backtest:", f"| {len(stats['totPositions'])} positions")
+            loadingBar(klineIndex, len(self.klines) - 1, "Backtest:", f"| {len(stats['totPositions'])} pos | {stats['netProfit']:.2f}€")
 
             # if maxNumOfPositions is open, skip kline
             if len(openPositions) >= self.maxOpenPositions:
@@ -256,6 +256,7 @@ class Backtest:
             # simulate positions
             for openPos in openPositions:
                 if openPos.entryIndex > klineIndex:
+                    # this is because position open in the next candle
                     continue
 
                 # check sl

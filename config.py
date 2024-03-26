@@ -1,10 +1,16 @@
 # the configuration for the simulated positions
 positionSimConfig = {
-    "sl": 0.2,     # in PERCENTS
+    "sl": 0.1,     # in PERCENTS
     "tp": 0.2,
-    "maxLength": 30,
+    "maxLength": 15,
     "minLength": 1,
     "max chop": 1
+}
+
+# this is to allow more flexibility
+actualPositionConfig = {
+    "sl": 0.1,     # in PERCENTS
+    "tp": 0.1
 }
 
 
