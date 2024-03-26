@@ -289,8 +289,8 @@ class Knn(DecisionMaker):
 
 			dp = [
 				kline["close"] - kline["open"], 	# price change
-				# sma5diff,  							# sma5 change
-				sma15diff							# sma15 change
+				sma5diff,  							# sma5 change
+				# sma15diff							# sma15 change
 			]
 
 			dataPoints.append(dp)

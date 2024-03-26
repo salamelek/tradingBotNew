@@ -1,16 +1,16 @@
 # the configuration for the simulated positions
 positionSimConfig = {
-    "sl": 0.1,     # in PERCENTS
-    "tp": 0.2,
-    "maxLength": 15,
+    "sl": 0.2,     # in PERCENTS
+    "tp": 0.3,
+    "maxLength": 25,
     "minLength": 1,
     "max chop": 1
 }
 
 # this is to allow more flexibility
 actualPositionConfig = {
-    "sl": 0.1,     # in PERCENTS
-    "tp": 0.1
+    "sl": 0.2,     # in PERCENTS
+    "tp": 0.2
 }
 
 
@@ -20,6 +20,7 @@ knnConfig = {
     # "threshold": 0.000001,    # forex
     "threshold": 1,
     "sameDirectionRatio": 1
+    # "sameDirectionRatio": 1
 }
 
 
