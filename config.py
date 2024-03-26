@@ -1,8 +1,8 @@
 # the configuration for the simulated positions
 positionSimConfig = {
-    "sl": 0.1,     # in PERCENTS
-    "tp": 0.1,
-    "maxLength": 50,
+    "sl": 0.2,     # in PERCENTS
+    "tp": 0.2,
+    "maxLength": 30,
     "minLength": 1,
     "max chop": 1
 }
@@ -10,7 +10,7 @@ positionSimConfig = {
 
 # the parameters for the knn algo
 knnConfig = {
-    "k": 3,
+    "k": 5,
     # "threshold": 0.000001,    # forex
     "threshold": 1,
     "sameDirectionRatio": 1

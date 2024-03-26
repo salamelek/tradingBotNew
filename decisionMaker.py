@@ -165,9 +165,10 @@ class Knn(DecisionMaker):
 			return {"predicted": None, "considered": None}
 
 		# check if the nn are acceptable
-		worstDist = knn[-1]["distance"]  # worst distance
+		# worstDist = knn[-1]["distance"]  # worst distance
+		meanDist = sum([nn["distance"] for nn in knn]) / len(knn)
 
-		if worstDist > self.knnParams["threshold"]:
+		if meanDist > self.knnParams["threshold"]:
 			# nn was not acceptable
 			# print(f"nn was not acceptable ({meanDist:.5f}/{knnConfig['threshold']})")
 			return {"predicted": None, "considered": None}
