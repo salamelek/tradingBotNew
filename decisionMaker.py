@@ -136,7 +136,7 @@ def lorentzianDistStolen(a, b):
 
 
 class Knn(DecisionMaker):
-	def __init__(self, trainKlines: list, knnParams=knnConfig, positionParams=positionSimConfig):
+	def __init__(self, trainKlines: list, simKlines: list, knnParams=knnConfig, positionParams=positionSimConfig):
 		"""
 		:param trainKlines:
 		:param positionParams: the parameters of the simulated positions
@@ -162,6 +162,8 @@ class Knn(DecisionMaker):
 		self.trainDataPoints = self.extractDataPoints(self.trainKlines)
 		self.gridDataPoints = self.placeDpInGrid(self.trainDataPoints)
 
+		self.simDataPoints = self.extractDataPoints(simKlines)
+
 		self.knnParams = knnParams
 		self.positionParams = positionParams
 
@@ -174,11 +176,8 @@ class Knn(DecisionMaker):
 		:return: 					{"predicted": position, "considered": []}
 		"""
 
-		# convert the currentKlines to dataPoints
-		currentDataPoints = self.extractDataPoints(currentKlines)
-
 		# get the knn for the last kline
-		knn = self.getKnnGrid(currentDataPoints[currentKlineIndex])
+		knn = self.getKnnGrid(self.simDataPoints[currentKlineIndex])
 
 		if not knn:
 			# the knn list is empty

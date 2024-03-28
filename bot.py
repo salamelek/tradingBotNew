@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # simKlines = klines[500000:501440]
     # simKlines = klines[500000:502880]
 
-    brain = Knn(trainKlines)
+    brain = Knn(trainKlines, simKlines)
     backtest = Backtest(simKlines, brain, maxOpenPositions=1)
 
     with open("backtest.pickle", "wb") as pickleFile:

@@ -226,9 +226,10 @@ class Backtest:
         maxNetProfit = 0
 
         # for each kline in backtest klines
-        for klineIndex in range(len(self.klines)):
+        numOfKlines = len(self.klines)
+        for klineIndex in range(numOfKlines):
             # print progressbar
-            loadingBar(klineIndex, len(self.klines) - 1, "Backtest:", f"| {len(stats['totPositions'])} pos | {stats['netProfit']:.2f}€")
+            loadingBar(klineIndex, numOfKlines - 1, "Backtest:", f"| {len(stats['totPositions'])} pos | {stats['netProfit']:.2f}€")
 
             # if maxNumOfPositions is open, skip kline
             if len(openPositions) >= self.maxOpenPositions:
