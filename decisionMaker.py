@@ -96,6 +96,28 @@ def euclideanDistance(a, b):
 	return np.sqrt(dist)
 
 
+def euclideanSquaredDist(a, b):
+	"""
+	Returns the squared Euclidean distance of the two given points.
+	Faster than Euclidean
+	works (a little) faster, but the dist threshold should be adjusted
+
+	:param a:
+	:param b:
+	:return:
+	"""
+
+	if len(a) != len(b):
+		raise Exception("The two points must have the same length")
+
+	dist = 0
+
+	for i in range(len(a)):
+		dist += (a[i] - b[i]) ** 2
+
+	return dist
+
+
 def lorentzianDistStolen(a, b):
 	"""
 	Stolen shamelessly from
@@ -272,25 +294,21 @@ class Knn(DecisionMaker):
 
 			sma5open = sma(klines, i, 5, "open")
 			sma5close = sma(klines, i, 5, "close")
-			sma15open = sma(klines, i, 15, "open")
-			sma15close = sma(klines, i, 15, "close")
+			smat5open = smaTypical(klines, i, 5)
+			smat5close = smaTypical(klines, i, 5)
 
 			try:
 				sma5diff = sma5close - sma5open
+				smat5diff = smat5close - smat5open
 			except TypeError:
 				# the sma is None since there is not enough data
 				sma5diff = None
-
-			try:
-				sma15diff = sma15close - sma15open
-			except TypeError:
-				# the sma is None since there is not enough data
-				sma15diff = None
+				smat5diff = None
 
 			dp = [
 				kline["close"] - kline["open"], 	# price change
 				sma5diff,  							# sma5 change
-				# sma15diff							# sma15 change
+				smat5diff							# smat5 change
 			]
 
 			dataPoints.append(dp)
@@ -343,8 +361,8 @@ class Knn(DecisionMaker):
 			index = dp["index"]
 
 			try:
+				# distance = euclideanSquaredDist(trainDp, dataPoint)
 				distance = euclideanDistance(trainDp, dataPoint)
-			# distance = lorentzianDistStolen(trainDp, dataPoint)
 			except TypeError:
 				# the dp is not calculated yet
 				continue

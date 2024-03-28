@@ -152,7 +152,7 @@ class Backtest:
 
     def __str__(self):
         return f"""
-╔═╣ BACKTEST RESULTS:
+╔═╣ BACKTEST RESULTS ╠═══════════════
 ║
 ║   Net profit:                 {self.stats["netProfit"]:.2f}€
 ║   Profit factor:              {self.stats["profitFactor"]:.2f}
@@ -167,6 +167,8 @@ class Backtest:
 ╠════════════════════════════════════
 ║   Num. of winning positions:  {len(self.stats["winningPositions"])}
 ║   Num. of losing positions:   {len(self.stats["losingPositions"])}
+╠════════════════════════════════════
+║   Klines tested:              {len(self.klines)}
 ╚════════════════════════════════════
         """
 
